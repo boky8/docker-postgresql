@@ -13,8 +13,19 @@ elif [[ ${1} == postgres || ${1} == $(which postgres) ]]; then
   set --
 fi
 
-# default behaviour is to launch postgres
-if [[ -z ${1} ]]; then
+start_postgres_daemon() {
+  # internal start of server in order to allow set-up using psql-client   
+  # does not listen on TCP/IP and waits until start finishes
+  gosu postgres pg_ctl -D "$PG_DATADIR" -o "-c listen_addresses=''" -w start
+}
+
+stop_postgres_daemon() {
+  # Stop the daemon
+  gosu postgres pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
+  set_postgresql_param "listen_addresses" "*" quiet
+}
+
+setup_postgres() {
   map_uidgid
 
   create_datadir
@@ -25,11 +36,51 @@ if [[ -z ${1} ]]; then
   set_resolvconf_perms
 
   configure_postgresql
+}
+
+run_startup_scripts() {
+  # Run scripts in much the same manner that the official image does
+  if [ -f /docker-entrypoint-initdb.d/* ]; then
+    start_postgres_daemon
+
+    : ${PG_USER:=postgres}
+    : ${PG_DATABASE:=$PG_USER}
+    export PG_USER PG_DATABASE
+
+    for f in /docker-entrypoint-initdb.d/*; do
+      case "$f" in
+        *.sh)
+          echo "$0: running $f"
+          . "$f" 
+          ;;
+        *.sql) 
+          echo "$0: running $f"
+          psql -v ON_ERROR_STOP=1 --username "$PG_USER" --dbname "$PG_DATABASE" < "$f"
+          echo 
+          ;;
+        *)
+          echo "$0: ignoring $f" 
+          ;;
+        esac
+    echo
+    done
+
+    stop_postgres_daemon
+  fi
+}
+
+
+# default behaviour is to launch postgres
+if [[ -z ${1} ]]; then
+  setup_postgres
+  run_startup_scripts
 
   echo "Starting PostgreSQL ${PG_VERSION}..."
-  exec start-stop-daemon --start --chuid ${PG_USER}:${PG_USER} \
-    --exec ${PG_BINDIR}/postgres -- -D ${PG_DATADIR} ${EXTRA_ARGS}
+  exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
 else
-  exec "$@"
+  # This second flow is only usable with DOCKER EXEC.
+  # start_postgres_daemon
+  exec gosu postgres "$@"
+  # stop_postgres_daemon
 fi
 

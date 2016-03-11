@@ -11,6 +11,6 @@ dependencies:
     - mkdir -p ~/docker-postgresql; docker save --output ~/docker-postgresql/image.tar sameersbn/postgresql
 test:
   override:
-    - docker run -d --name=postgresql sameersbn/postgresql; sleep 10; docker ps; docker stop postgresql; sleep 3
+    - docker run -d --name=postgresql sameersbn/postgresql; sleep 10; docker ps; docker stop postgresql; sleep 5; docker ps -a
     - docker run -it --volumes-from=postgresql sameersbn/postgresql psql -U postgres -c "\conninfo"
 

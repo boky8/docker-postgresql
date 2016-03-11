@@ -72,13 +72,18 @@ run_startup_scripts() {
 
 # default behaviour is to launch postgres
 if [[ -z ${1} ]]; then
+  [[ ${DEBUG} == true ]] && echo "Will start up the daemon..."
+
   setup_postgres
   run_startup_scripts
 
   echo "Starting PostgreSQL ${PG_VERSION}..."
   exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
 else
+  # Our scripts for checking if postgres is online may produce non-zero exit codes.
+  # Make sure bash doesn't stop executing when such command is encountered.
   set +e
+
   # This second flow is only usable with DOCKER EXEC or DOCKER RUN.
   # We will check how we are executed (basically if postgres is running or not)
   # Please note that IT IS A VERY BAD IDEA to run anothe posgres instance
@@ -88,7 +93,7 @@ else
   #   an already running instance, YOU WILL CRASH IT.
   [[ ${DEBUG} == true ]] && echo "Verifying if we are running from an existing container..."
   [[ ${DEBUG} == true ]] && gosu postgres pg_ctl -D "$PG_DATADIR" status
-  [[ ${DEBUG} == true ]] && echo exec gosu postgres "$@"
+  [[ ${DEBUG} == true ]] && echo "Will execute: exec gosu postgres" "$@"
 
   if [ `gosu postgres pg_ctl -D "$PG_DATADIR" status 2>&1 | grep -q "server is running"` ]; then
     # Support the "exec" option

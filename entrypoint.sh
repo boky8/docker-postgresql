@@ -78,6 +78,7 @@ if [[ -z ${1} ]]; then
   echo "Starting PostgreSQL ${PG_VERSION}..."
   exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
 else
+  set +e
   # This second flow is only usable with DOCKER EXEC or DOCKER RUN.
   # We will check how we are executed (basically if postgres is running or not)
   # Please note that IT IS A VERY BAD IDEA to run anothe posgres instance
@@ -86,7 +87,7 @@ else
   # - use "docker run" to modify the data of an existing (shut-down) instance, if you try to do it on 
   #   an already running instance, YOU WILL CRASH IT.
   [[ ${DEBUG} == true ]] && echo "Verifying if we are running from an existing container..."
-  [[ ${DEBUG} == true ]] && echo gosu postgres pg_ctl -D "$PG_DATADIR" status && gosu postgres pg_ctl -D "$PG_DATADIR" status
+  [[ ${DEBUG} == true ]] && gosu postgres pg_ctl -D "$PG_DATADIR" status
   [[ ${DEBUG} == true ]] && echo exec gosu postgres "$@"
 
   if [ `gosu postgres pg_ctl -D "$PG_DATADIR" status 2>&1 | grep -q "server is running"` ]; then

@@ -70,21 +70,17 @@ run_startup_scripts() {
 }
 
 
-# We run the setup and the startup scripts every time, even if the user is running a specific command.
-# We do this to support use cases where a user, for example, has startup scripts to prepopulate the
-# database and then runs "docker ... psql" directly to connect to the database. If we didn't do it,
-# he would need to start the docker image once and then restart it with "psql".
-setup_postgres
-run_startup_scripts
-
-
 # default behaviour is to launch postgres
 if [[ -z ${1} ]]; then
+  setup_postgres
+  run_startup_scripts
+
   echo "Starting PostgreSQL ${PG_VERSION}..."
   exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
 else
-  start_postgres_daemon
+  # This second flow is only usable with DOCKER EXEC.
+  # start_postgres_daemon
   exec gosu postgres "$@"
-  stop_postgres_daemon
+  # stop_postgres_daemon
 fi
 

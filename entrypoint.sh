@@ -85,19 +85,22 @@ else
   # - use "docker exec" to enter a running instance
   # - use "docker run" to modify the data of an existing (shut-down) instance, if you try to do it on 
   #   an already running instance, YOU WILL CRASH IT.
-  [[ ${DEBUG} == true ]] && gosu postgres pg_ctl -D "$PG_DATADIR" status
+  [[ ${DEBUG} == true ]] && echo "Verifying if we are running from an existing container..."
+  [[ ${DEBUG} == true ]] && echo gosu postgres pg_ctl -D "$PG_DATADIR" status && gosu postgres pg_ctl -D "$PG_DATADIR" status
   [[ ${DEBUG} == true ]] && echo exec gosu postgres "$@"
 
-  if [ ! `gosu postgres pg_ctl -D "$PG_DATADIR" status 2>/dev/null | grep -q "server is running"` ]; then
+  if [ `gosu postgres pg_ctl -D "$PG_DATADIR" status 2>&1 | grep -q "server is running"` ]; then
+    # Support the "exec" option
+
+    [ ${DEBUG} == true ]] && "We're in an existing container, execute the command: $@"
+    exec gosu postgres "$@"
+  else
     # Support the "run" option
 
     echo "Starting PostgreSQL ${PG_VERSION}..."
     start_postgres_daemon
     exec gosu postgres "$@"
     stop_postgres_daemon
-  else
-    # Support the "exec" option
-    exec gosu postgres "$@"
   fi
 fi
 

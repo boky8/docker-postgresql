@@ -78,9 +78,23 @@ if [[ -z ${1} ]]; then
   echo "Starting PostgreSQL ${PG_VERSION}..."
   exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
 else
-  # This second flow is only usable with DOCKER EXEC.
-  # start_postgres_daemon
-  exec gosu postgres "$@"
-  # stop_postgres_daemon
+  # This second flow is only usable with DOCKER EXEC or DOCKER RUN.
+  # We will check how we are executed (basically if postgres is running or not)
+  # Please note that IT IS A VERY BAD IDEA to run anothe posgres instance
+  # From a RUNNING postgres directory. So, to sum up:
+  # - use "docker exec" to enter a running instance
+  # - use "docker run" to modify the data of an existing (shut-down) instance, if you try to do it on 
+  #   an already running instance, YOU WILL CRASH IT.
+  if [ ! `gosu postgres pg_ctl -D "$PG_DATADIR" status 2>/dev/null | grep -q "server is running"` ]; then
+    # Support the "run" option
+
+    echo "Starting PostgreSQL ${PG_VERSION}..."
+    start_postgres_daemon
+    exec gosu postgres "$@"
+    stop_postgres_daemon
+  else
+    # Support the "exec" option
+    exec gosu postgres "$@"
+  fi
 fi
 

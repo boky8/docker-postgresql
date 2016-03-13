@@ -9,6 +9,8 @@ ENV PG_APP_HOME="/etc/docker-postgresql" \
     PG_RUNDIR=/run/postgresql \
     PG_LOGDIR=/var/log/postgresql \
     PG_CERTDIR=/etc/postgresql/certs \
+    PG_LOG_ARCHIVING=false \
+    PG_LOG_ARCHIVING_COMMAND="" \
     GOSU_VERSION=1.7 \
     LANG=en_US.utf8
 

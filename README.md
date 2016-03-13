@@ -17,6 +17,7 @@
   - [Granting user access to a database](#granting-user-access-to-a-database)
   - [Creating replication user](#creating-replication-user)
   - [Setting up a replication cluster](#setting-up-a-replication-cluster)
+  - [Enabling log archiving](#enabling-log-archiving)
   - [Creating a snapshot](#creating-a-snapshot)
   - [Creating a backup](#creating-a-backup)
   - [Command-line arguments](#command-line-arguments)
@@ -262,6 +263,13 @@ Here are some important notes about a PostgreSQL replication cluster:
  - Writes can only occur on the master
  - Slaves are read-only
  - For best performance, limit the reads to the slave nodes
+
+## Enabling log archiving
+
+If you want to enable log archiving (for [point-in-time recovery]()), set `PG_LOG_ARCHIVING=true`. Logs will be copied over to to
+`/var/lib/postgresql/{version}/log-archive/`. If there's a file `archive.sh` in this folder, it will be executed after a successful
+copy. You can override the copy command by setting the `PG_LOC_ARCHIVING_COMMAND` variable.
+
 
 ## Creating a snapshot
 

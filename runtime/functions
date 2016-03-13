@@ -69,7 +69,7 @@ set_postgresql_param() {
       if [[ ${verbosity} == verbose ]]; then
         echo "‣ Setting postgresql.conf parameter: ${key} = '${value}'"
       fi
-      value="$(echo "${value}" | sed 's@[&]@\\&@  g')"
+      value="$(echo "${value}" | sed 's|[@]|\\@|g')"
       exec_as_postgres sed -r -i "s@^[#]*[ ]*${key} = .*@${key} = '${value}'@" ${PG_CONF}
     fi
   fi

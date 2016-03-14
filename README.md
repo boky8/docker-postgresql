@@ -268,7 +268,7 @@ Here are some important notes about a PostgreSQL replication cluster:
 
 If you want to enable log archiving (for [point-in-time recovery]()), set `PG_LOG_ARCHIVING=true`. Logs will be copied over to to
 `/var/lib/postgresql/{version}/log-archive/`. If there's a file `archive.sh` in this folder, it will be executed after a successful
-copy. You can override the copy command by setting the `PG_LOC_ARCHIVING_COMMAND` variable.
+copy. You can override the copy command by setting the `PG_LOG_ARCHIVING_COMMAND` variable.
 
 
 ## Creating a snapshot

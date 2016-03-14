@@ -26,7 +26,15 @@ RUN \
     if [[ "$ARCH" == "i*" ]]; then export ARCH=i386; fi && \
     if [[ "$ARCH" == "arm*" ]]; then export ARCH=armhf; fi && \
     echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    apk update && apk add acl bash curl "postgresql@edge>=${PG_VERSION}" "postgresql-client@edge>=${PG_VERSION}" && \
+    apk update && \
+    apk add \
+      acl \
+      bash \
+      curl \
+      "postgresql@edge>=${PG_VERSION}" \
+      "postgresql-client@edge>=${PG_VERSION}" \
+      "postgresql-contrib>=${PG_VERSION}" \
+      && \
     mkdir /docker-entrypoint-initdb.d && \
     curl -fsSL -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${ARCH}" && \
     chmod +x /usr/local/bin/gosu && \

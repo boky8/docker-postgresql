@@ -13,18 +13,6 @@ elif [[ ${1} == postgres || ${1} == $(which postgres) ]]; then
   set --
 fi
 
-start_postgres_daemon() {
-  # internal start of server in order to allow set-up using psql-client   
-  # does not listen on TCP/IP and waits until start finishes
-  gosu postgres pg_ctl -D "$PG_DATADIR" -o "-c listen_addresses=''" -w start
-}
-
-stop_postgres_daemon() {
-  # Stop the daemon
-  gosu postgres pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
-  set_postgresql_param "listen_addresses" "*" quiet
-}
-
 setup_postgres() {
   map_uidgid
 
@@ -38,46 +26,13 @@ setup_postgres() {
   configure_postgresql
 }
 
-run_startup_scripts() {
-  # Run scripts in much the same manner that the official image does
-  if [ -f /docker-entrypoint-initdb.d/* ]; then
-    start_postgres_daemon
-
-    : ${PG_USER:=postgres}
-    : ${PG_DATABASE:=$PG_USER}
-    export PG_USER PG_DATABASE
-
-    for f in /docker-entrypoint-initdb.d/*; do
-      case "$f" in
-        *.sh)
-          echo "$0: running $f"
-          . "$f" 
-          ;;
-        *.sql) 
-          echo "$0: running $f"
-          psql -v ON_ERROR_STOP=1 --username "$PG_USER" --dbname "$PG_DATABASE" < "$f"
-          echo 
-          ;;
-        *)
-          echo "$0: ignoring $f" 
-          ;;
-        esac
-    echo
-    done
-
-    stop_postgres_daemon
-  fi
-}
-
-
 # default behaviour is to launch postgres
 if [[ -z ${1} ]]; then
   [[ ${DEBUG} == true ]] && echo "Will start up the daemon..."
 
   setup_postgres
-  run_startup_scripts
 
-  echo "Starting PostgreSQL ${PG_VERSION}..."
+  echo "Starting PostgreSQL ${PG_VERSION}: ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}"
   exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
 else
   # Our scripts for checking if postgres is online may produce non-zero exit codes.
@@ -103,7 +58,6 @@ else
   else
     # Support the "run" option
 
-    echo "Starting PostgreSQL ${PG_VERSION}..."
     start_postgres_daemon
     exec gosu postgres "$@"
     stop_postgres_daemon

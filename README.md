@@ -13,8 +13,8 @@
   - [Setting `postgres` user password](#setting-postgres-user-password)
   - [Creating database user](#creating-database-user)
   - [Creating databases](#creating-databases)
-  - [Enabling unaccent extension](#enabling-unaccent-extension)
   - [Granting user access to a database](#granting-user-access-to-a-database)
+  - [Enabling extensions](#enabling-extensions)
   - [Creating replication user](#creating-replication-user)
   - [Setting up a replication cluster](#setting-up-a-replication-cluster)
   - [Enabling log archiving](#enabling-log-archiving)
@@ -30,7 +30,7 @@
 # Introduction
 
 `Dockerfile` to create a [Docker](https://www.docker.com/) container image for [PostgreSQL](http://postgresql.org/).
-It's based on [Alpine linux](http://www.alpinelinux.org/) so the target image is really small (arounf 25Mb).
+It's based on [Alpine linux](http://www.alpinelinux.org/) so the target image is really small (around 25Mb).
 
 PostgreSQL is an object-relational database management system (ORDBMS) with an emphasis on extensibility and standards-compliance [[source](https://en.wikipedia.org/wiki/PostgreSQL)].
 
@@ -63,7 +63,7 @@ Automated builds of the image are available on [Dockerhub](https://hub.docker.co
 > **Note**: Builds are also available on [Quay.io](https://quay.io/repository/sameersbn/postgresql)
 
 ```bash
-docker pull sameersbn/postgresql:9.5.1-01
+docker pull sameersbn/postgresql:9.4-17
 ```
 
 Alternatively you can build the image yourself.
@@ -80,7 +80,7 @@ Start PostgreSQL using:
 docker run --name postgresql -itd --restart always \
   --publish 5432:5432 \
   --volume /srv/docker/postgresql:/var/lib/postgresql \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
 
 Login to the PostgreSQL server using:
@@ -111,7 +111,7 @@ By default connections to the PostgreSQL server need to authenticated using a pa
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'PG_TRUST_LOCALNET=true' \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
 
 > **Note**
@@ -125,7 +125,7 @@ By default the `postgres` user is not assigned a password and as a result you ca
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'PG_PASSWORD=passw0rd' \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
 
 
@@ -141,7 +141,7 @@ A new PostgreSQL database user can be created by specifying the `DB_USER` and `D
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'DB_USER=dbuser' --env 'DB_PASS=dbuserpass' \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
 
 > **Notes**
@@ -158,7 +158,7 @@ A new PostgreSQL database can be created by specifying the `DB_NAME` variable wh
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'DB_NAME=dbname' \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
 
 By default databases are created by copying the standard system database named `template1`. You can specify a different template for your database using the `DB_TEMPLATE` parameter. Refer to [Template Databases](http://www.postgresql.org/docs/9.5/static/manage-ag-templatedbs.html) for further information.
@@ -170,22 +170,8 @@ Additionally, more than one database can be created by specifying a comma separa
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'DB_NAME=dbname1,dbname2' \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
-
-# Enabling unaccent extension
-
-Unaccent is a text search dictionary that removes accents (diacritic signs) from lexemes. It's a filtering dictionary, which means its output is always passed to the next dictionary (if any), unlike the normal behavior of dictionaries. This allows accent-insensitive processing for full text search [[source](http://www.postgresql.org/docs/9.5/static/unaccent.html)].
-
-You can enable the unaccent extension on database(s) by specifying `DB_UNACCENT=true`. For example, the following command enables the unaccent extension for the `dbname` database.
-
-```bash
-docker run --name postgresql -itd \
-  --env 'DB_NAME=dbname' --env 'DB_UNACCENT=true' \
-  sameersbn/postgresql:9.5.1-01
-```
-
-*By default the unaccent extension is disabled*
 
 ## Granting user access to a database
 
@@ -195,10 +181,26 @@ If the `DB_USER` and `DB_PASS` variables are specified along with the `DB_NAME` 
 docker run --name postgresql -itd --restart always \
   --env 'DB_USER=dbuser' --env 'DB_PASS=dbuserpass' \
   --env 'DB_NAME=dbname1,dbname2' \
-  sameersbn/postgresql:9.5.1-01
+  sameersbn/postgresql:9.4-17
 ```
 
 In the above example `dbuser` with be granted access to both the `dbname1` and `dbname2` databases.
+
+# Enabling extensions
+
+The image also packages the [postgres contrib module](http://www.postgresql.org/docs/9.5/static/contrib.html). A comma separated list of modules can be specified using the `DB_EXTENSION` parameter.
+
+```bash
+docker run --name postgresql -itd \
+  --env 'DB_NAME=db1,db2' --env 'DB_EXTENSION=unaccent,pg_trgm' \
+  sameersbn/postgresql:9.5.1-01
+```
+
+The above command enables the `unaccent` and `pg_trgm` modules on the databases listed in `DB_NAME`, namely `db1` and `db2`.
+
+> **NOTE**:
+>
+> This option deprecates the `DB_UNACCENT` parameter.
 
 ## Creating replication user
 

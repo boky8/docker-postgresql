@@ -1,6 +1,6 @@
 PostgreSQL:
   restart: always
-  image: sameersbn/postgresql:9.4-14
+  image: sameersbn/postgresql:9.4-17
   ports:
     - "5432:5432"
   environment:
@@ -11,7 +11,7 @@ PostgreSQL:
     - DB_NAME=
     - DB_TEMPLATE=
 
-    - DB_UNACCENT=
+    - DB_EXTENSION=
 
     - REPLICATION_MODE=
     - REPLICATION_USER=

@@ -1,4 +1,4 @@
-[![Circle CI](https://circleci.com/gh/sameersbn/docker-postgresql.svg?style=shield)](https://circleci.com/gh/sameersbn/docker-postgresql) [![Docker Repository on Quay.io](https://quay.io/repository/boky/postgresql-kitchensink/status "Docker Repository on Quay.io")](https://quay.io/repository/boky/postgresql-kitchensink) [![](https://badge.imagelayers.io/boky/postgresql-kitchensink.svg)](https://imagelayers.io/?images=boky/postgresql-kitchensink:latest 'Get your own badge on imagelayers.io')
+[![Circle CI](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink.svg?style=shield)](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink) [![Docker Repository on Quay.io](https://quay.io/repository/boky/postgresql-kitchensink/status "Docker Repository on Quay.io")](https://quay.io/repository/boky/postgresql-kitchensink) [![](https://badge.imagelayers.io/boky/postgresql-kitchensink.svg)](https://imagelayers.io/?images=boky/postgresql-kitchensink:latest 'Get your own badge on imagelayers.io')
 
 # boky/postgresql-kitchensink:9.5.1-01
 

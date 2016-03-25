@@ -7,10 +7,10 @@ dependencies:
   override:
     #    - docker info
     #    - if [[ -e ~/docker-postgresql/image.tar ]]; then docker load --input ~/docker-postgresql/image.tar; fi
-    - docker build -t sameersbn/postgresql:9.5.1-01 .
-    #    - mkdir -p ~/docker-postgresql; docker save --output ~/docker-postgresql/image.tar sameersbn/postgresql
+    - docker build -t boky/postgresql-kitchensink .
+    #    - mkdir -p ~/docker-postgresql; docker save --output ~/docker-postgresql/image.tar boky/postgresql-kitchensink
 test:
   override:
-    - docker run -d --name=postgresql sameersbn/postgresql:9.5.1-01; sleep 10; docker ps; docker stop postgresql; sleep 5; docker ps -a
-    - docker run -it -e DEBUG=true --volumes-from=postgresql sameersbn/postgresql:9.5.1-01 psql -U postgres -c "\conninfo"
+    - docker run -d --name=postgresql boky/postgresql-kitchensink; sleep 10; docker ps; docker stop postgresql; sleep 5; docker ps -a
+    - docker run -it -e DEBUG=true --volumes-from=postgresql boky/postgresql-kitchensink psql -U postgres -c "\conninfo"
 

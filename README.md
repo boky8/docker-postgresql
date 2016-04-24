@@ -1,6 +1,6 @@
 [![Circle CI](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink.svg?style=shield)](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink) [![Docker Repository on Quay.io](https://quay.io/repository/boky/postgresql-kitchensink/status "Docker Repository on Quay.io")](https://quay.io/repository/boky/postgresql-kitchensink) [![](https://badge.imagelayers.io/boky/postgresql-kitchensink.svg)](https://imagelayers.io/?images=boky/postgresql-kitchensink:latest 'Get your own badge on imagelayers.io')
 
-# boky/postgresql-kitchensink:9.5.1-01
+# boky/postgresql-kitchensink:9.5.2-01
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -343,7 +343,7 @@ docker run --name postgresql -itd --restart always \
 To access the PostgreSQL logs you can use `docker exec`. For example:
 
 ```bash
-docker exec -it postgresql tail -f /var/log/postgresql/postgresql-9.5.1-main.log
+docker exec -it postgresql tail -f /var/log/postgresql/postgresql-9.5.2-main.log
 ```
 
 # UID/GID mapping

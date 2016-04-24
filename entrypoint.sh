@@ -6,14 +6,14 @@ source ${PG_APP_HOME}/functions
 
 declare EXTRA_ARGS=""
 
-function parse_extra_args()
+function parse_extra_args() {
   for i in "${1}"; do
     if [[ $i =~ "[[:space:]]" ]]; then
         i=\"$i\"
     fi
     EXTRA_ARGS="$EXTRA_ARGS$i "
   done
-done
+}
 
 # allow arguments to be passed to postgres
 if [[ ${1:0:1} = '-' ]]; then

@@ -4,25 +4,32 @@ source ${PG_APP_HOME}/functions
 
 [[ ${DEBUG} == true ]] && set -x
 
+# This wigly-wagly code here is required to support spaces in the arguments.
+# This will include the quotes around the parameters which include spaces.
 declare EXTRA_ARGS=""
-
 function parse_extra_args() {
-  for i in "${1}"; do
-    if [[ $i =~ "[[:space:]]" ]]; then
+  whitespace="[[:space:]]"
+  # Bash will expand the array when the function is called so interate through
+  # all the arguments of the function.
+  for i in "${@}"; do
+    if [[ $i =~ $whitespace ]]; then
+        # Add qoutes around the parameter
         i=\"$i\"
     fi
+    # Add add the parameter to the list...
     EXTRA_ARGS="$EXTRA_ARGS$i "
   done
 }
 
 # allow arguments to be passed to postgres
 if [[ ${1:0:1} = '-' ]]; then
-  parse_extra_args "$@"
+  parse_extra_args "${@}"
   set --
 elif [[ ${1} == postgres || ${1} == $(which postgres) ]]; then
   parse_extra_args "${@:2}"
   set --
 fi
+echo "PostgreSQL extra arguments: ${EXTRA_ARGS}"
 
 setup_postgres() {
   map_uidgid

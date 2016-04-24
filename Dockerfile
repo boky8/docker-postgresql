@@ -61,10 +61,9 @@ COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
 RUN \
-	touch ${PG_HOME}/wal-backup.sh && \
-	mkdir -p /var/lib/postgresql/wal-backup/ && \
+	mkdir -p ${PG_HOME}/wal-backup/ && \
 	echo "#!/bin/bash" > ${PG_HOME}/wal-backup.sh && \
-	echo "test ! -f $PG_HOME/wal-backup/\$1.bz2 && \\" >> ${PG_HOME}/wal-backup.sh && \
+	echo -n "test ! -f $PG_HOME/wal-backup/\$1.bz2 && " >> ${PG_HOME}/wal-backup.sh && \
 	echo "bzip2 \$2 > $PG_HOME/wal-backup/\$1.bz2) || exit 1" >> ${PG_HOME}/wal-backup.sh && \
 	chmod 755 $PG_HOME/wal-backup.sh && \
 	echo "=== Created wal-backup.sh ===" && cat $PG_HOME/wal-backup.sh

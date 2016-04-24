@@ -63,8 +63,10 @@ RUN chmod 755 /sbin/entrypoint.sh
 RUN \
 	mkdir -p ${PG_HOME}/wal-backup/ && \
 	echo "#!/bin/bash" > ${PG_HOME}/wal-backup.sh && \
-	echo -n "(test ! -f $PG_HOME/wal-backup/\$1.bz2 && " >> ${PG_HOME}/wal-backup.sh && \
-	echo "bzip2 \$2 > $PG_HOME/wal-backup/\$1.bz2) || exit 1" >> ${PG_HOME}/wal-backup.sh && \
+	echo "FULL_NAME=\$1" >> ${PG_HOME}/wal-backup.sh && \
+	echo "BASE_NAME=\$(basename \$FULL_NAME)" >> ${PG_HOME}/wal-backup.sh && \
+	echo -n "(test ! -f $PG_HOME/wal-backup/\$BASE_NAME.bz2 && " >> ${PG_HOME}/wal-backup.sh && \
+	echo "bzip2 \$FULL_NAME > $PG_HOME/wal-backup/\$BASE_NAME.bz2) || exit 1" >> ${PG_HOME}/wal-backup.sh && \
 	chmod 755 $PG_HOME/wal-backup.sh && \
 	echo "=== Created wal-backup.sh ===" && cat $PG_HOME/wal-backup.sh
 

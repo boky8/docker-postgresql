@@ -4,12 +4,23 @@ source ${PG_APP_HOME}/functions
 
 [[ ${DEBUG} == true ]] && set -x
 
+declare EXTRA_ARGS=""
+
+function parse_extra_args()
+  for i in "${1}"; do
+    if [[ $i =~ "[[:space:]]" ]]; then
+        i=\"$i\"
+    fi
+    EXTRA_ARGS="$EXTRA_ARGS$i "
+  done
+done
+
 # allow arguments to be passed to postgres
 if [[ ${1:0:1} = '-' ]]; then
-  EXTRA_ARGS="$@"
+  parse_extra_args "$@"
   set --
 elif [[ ${1} == postgres || ${1} == $(which postgres) ]]; then
-  EXTRA_ARGS="${@:2}"
+  parse_extra_args "${@:2}"
   set --
 fi
 
@@ -44,7 +55,7 @@ else
   # Please note that IT IS A VERY BAD IDEA to run anothe posgres instance
   # From a RUNNING postgres directory. So, to sum up:
   # - use "docker exec" to enter a running instance
-  # - use "docker run" to modify the data of an existing (shut-down) instance, if you try to do it on 
+  # - use "docker run" to modify the data of an existing (shut-down) instance, if you try to do it on
   #   an already running instance, YOU WILL CRASH IT.
   [[ ${DEBUG} == true ]] && echo "Verifying if we are running from an existing container..."
   [[ ${DEBUG} == true ]] && gosu postgres pg_ctl -D "$PG_DATADIR" status
@@ -63,4 +74,3 @@ else
     stop_postgres_daemon
   fi
 fi
-

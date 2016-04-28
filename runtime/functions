@@ -132,17 +132,20 @@ configure_hot_standby() {
 }
 
 configure_log_archiving() {
-  if [[ ${PG_LOG_ARCHIVING} == true ]] || [[ ! -z ${PG_LOG_ARCHIVING_COMMAND} ]]; then
-    log_archive="${PG_HOME}/${PG_VERSION}/log-archive/"
-    mkdir -p ${log_archive}
+  if [[ ! -z ${PG_LOG_ARCHIVING} ]]; then
     set_postgresql_param "archive_mode" "on"
 
+    # This will return true if a variable is unset or set to the empty string ("").
     if [[ -z ${PG_LOG_ARCHIVING_COMMAND} ]]; then
+      log_archive="${PG_HOME}/wal-backup/"
+      mkdir -p ${log_archive}
       backup_in_progress="test \! -f ${log_archive}/backup_in_progress"
       file_exists="test -f ${log_archive}/%f"
       copy_file="cp %p ${log_archive}/%f"
       execute_shell="[[ \! -x ${log_archive}/archive.sh ]] || ([[ -x ${log_archive}/archive.sh ]] && ${log_archive}/archive.sh %f %p)"
       set_postgresql_param "archive_command" "(${backup_in_progress} || (${file_exists} || (${copy_file} && (${execute_shell}))))"
+    else
+      set_postgresql_param "archive_command" "${PG_LOG_ARCHIVING_COMMAND}"
     fi
   fi
 }
@@ -392,7 +395,7 @@ create_replication_user() {
 
 
 start_postgres_daemon() {
-  # internal start of server in order to allow set-up using psql-client   
+  # internal start of server in order to allow set-up using psql-client
   # does not listen on TCP/IP and waits until start finishes
   echo "Starting PostgreSQL ${PG_VERSION}: pg_ctl -D $PG_DATADIR -o ${EXTRA_ARGS} -c listen_addresses='' -w start"
   gosu postgres pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
@@ -417,15 +420,15 @@ run_startup_scripts() {
       case "$f" in
         *.sh)
           echo "$0: running $f"
-          . "$f" 
+          . "$f"
           ;;
-        *.sql) 
+        *.sql)
           echo "$0: running $f"
           psql -v ON_ERROR_STOP=1 --username "$PG_USER" --dbname "$PG_DATABASE" < "$f"
-          echo 
+          echo
           ;;
         *)
-          echo "$0: ignoring $f" 
+          echo "$0: ignoring $f"
           ;;
         esac
     echo

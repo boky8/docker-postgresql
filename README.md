@@ -1,6 +1,6 @@
 [![Circle CI](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink.svg?style=shield)](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink) [![Docker Repository on Quay.io](https://quay.io/repository/boky/postgresql-kitchensink/status "Docker Repository on Quay.io")](https://quay.io/repository/boky/postgresql-kitchensink) [![](https://images.microbadger.com/badges/image/boky/postgres-kitchensink.svg)](https://microbadger.com/images/boky/postgres-kitchensink "Get your own image badge on microbadger.com") 
 
-# boky/postgresql-kitchensink:9.5.2-01
+# boky/postgresql-kitchensink:9.5.4-01
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -22,7 +22,7 @@
   - [Creating a backup](#creating-a-backup)
   - [Command-line arguments](#command-line-arguments)
   - [Logs](#logs)
-  - [UID/GID mapping](#uid-gid-mapping)
+  - [UID/GID mapping](#uidgid-mapping)
 - [Maintenance](#maintenance)
   - [Upgrading](#upgrading)
   - [Shell Access](#shell-access)
@@ -326,7 +326,7 @@ You can customize the launch command of PostgreSQL server by specifying argument
 
 ```bash
 docker run --name postgresql -itd --restart always \
-  boky/postgresql-kitchensink -c log_connections=on
+  sameersbn/postgresql:9.5 -c log_connections=on
 ```
 
 Please refer to the documentation of [postgres](http://www.postgresql.org/docs/9.5/static/app-postgres.html) for the complete list of available options.

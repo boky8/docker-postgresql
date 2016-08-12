@@ -1,5 +1,8 @@
 # Changelog
 
+**9.5**
+- postgresql: upgrade to 9.5
+
 **9.4-17**
 - added `DB_EXTENSION` configuration parameter
 

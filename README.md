@@ -88,13 +88,13 @@ Start PostgreSQL using:
 docker run --name postgresql -itd --restart always \
   --publish 5432:5432 \
   --volume /srv/docker/postgresql:/var/lib/postgresql \
-  boky/postgresql-kitchensink
+  boky/postgres-kitchensink
 ```
 
 Login to the PostgreSQL server using:
 
 ```bash
-docker exec -it postgresql sudo -u postgres psql
+docker exec -it postgresql psql -Upostgres
 ```
 
 *Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*

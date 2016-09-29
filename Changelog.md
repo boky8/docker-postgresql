@@ -1,5 +1,8 @@
 # Changelog
 
+**9.6.0-01**
+- postgresql: upgraded to 9.6.0
+
 **9.5**
 - postgresql: upgrade to 9.5
 

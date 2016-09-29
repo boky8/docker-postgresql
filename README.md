@@ -1,6 +1,6 @@
 [![Circle CI](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink.svg?style=shield)](https://circleci.com/gh/boky8/docker-postgresql/tree/kitchensink) [![Docker Repository on Quay.io](https://quay.io/repository/boky/postgresql-kitchensink/status "Docker Repository on Quay.io")](https://quay.io/repository/boky/postgresql-kitchensink) [![](https://images.microbadger.com/badges/image/boky/postgres-kitchensink.svg)](https://microbadger.com/images/boky/postgres-kitchensink "Get your own image badge on microbadger.com") 
 
-# boky/postgresql-kitchensink:9.5.4-01
+# boky/postgresql-kitchensink:9.6.0-01
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -37,11 +37,11 @@ PostgreSQL is an object-relational database management system (ORDBMS) with an e
 
 This image has been built with the following PostgreSQL modules:
 - `--with-openssl`: Support for TLS connections to Postgres (5433, see bellow how to enable)
-- `--with-ldap`: Support for [LDAP authentication](http://www.postgresql.org/docs/9.5/static/auth-methods.html)
-- `--with-libxml`: Support for the [XML column type](http://www.postgresql.org/docs/9.5/static/datatype-xml.html)
-- `--with-libxslt`: [XSLT transformations and XPath querying](http://www.postgresql.org/docs/9.5/static/xml2.html)
-- `--with-perl`: [PERL PL modules](http://www.postgresql.org/docs/9.5/static/plperl.html)
-- `--with-python`: [Python PL modules](http://www.postgresql.org/docs/9.5/static/plpython.html)
+- `--with-ldap`: Support for [LDAP authentication](http://www.postgresql.org/docs/9.6/static/auth-methods.html)
+- `--with-libxml`: Support for the [XML column type](http://www.postgresql.org/docs/9.6/static/datatype-xml.html)
+- `--with-libxslt`: [XSLT transformations and XPath querying](http://www.postgresql.org/docs/9.6/static/xml2.html)
+- `--with-perl`: [PERL PL modules](http://www.postgresql.org/docs/9.6/static/plperl.html)
+- `--with-python`: [Python PL modules](http://www.postgresql.org/docs/9.6/static/plpython.html)
 
 ## Contributing
 
@@ -169,7 +169,7 @@ docker run --name postgresql -itd --restart always \
   boky/postgresql-kitchensink
 ```
 
-By default databases are created by copying the standard system database named `template1`. You can specify a different template for your database using the `DB_TEMPLATE` parameter. Refer to [Template Databases](http://www.postgresql.org/docs/9.5/static/manage-ag-templatedbs.html) for further information.
+By default databases are created by copying the standard system database named `template1`. You can specify a different template for your database using the `DB_TEMPLATE` parameter. Refer to [Template Databases](http://www.postgresql.org/docs/9.6/static/manage-ag-templatedbs.html) for further information.
 
 Additionally, more than one database can be created by specifying a comma separated list of database names in `DB_NAME`. For example, the following command creates two new databases named `dbname1` and `dbname2`.
 
@@ -196,7 +196,7 @@ In the above example `dbuser` with be granted access to both the `dbname1` and `
 
 # Enabling extensions
 
-The image also packages the [postgres contrib module](http://www.postgresql.org/docs/9.5/static/contrib.html). A comma separated list of modules can be specified using the `DB_EXTENSION` parameter.
+The image also packages the [postgres contrib module](http://www.postgresql.org/docs/9.6/static/contrib.html). A comma separated list of modules can be specified using the `DB_EXTENSION` parameter.
 
 ```bash
 docker run --name postgresql -itd \
@@ -304,7 +304,7 @@ This is useful for developers to quickly snapshot the current state of a live da
 
 Just as the case of setting up a slave node or generating a snapshot, you can also create a backup of the data on the master by specifying `REPLICATION_MODE=backup`.
 
-> The backups are generated with [pg_basebackup](http://www.postgresql.org/docs/9.5/static/app-pgbasebackup.html) using the replication protocol.
+> The backups are generated with [pg_basebackup](http://www.postgresql.org/docs/9.6/static/app-pgbasebackup.html) using the replication protocol.
 
 Once the master node is created as specified in [Setting up a replication cluster](#setting-up-a-replication-cluster), you can create a point-in-time backup using:
 
@@ -326,10 +326,10 @@ You can customize the launch command of PostgreSQL server by specifying argument
 
 ```bash
 docker run --name postgresql -itd --restart always \
-  sameersbn/postgresql:9.5 -c log_connections=on
+  boky/postgresql-kitchensink -c log_connections=on
 ```
 
-Please refer to the documentation of [postgres](http://www.postgresql.org/docs/9.5/static/app-postgres.html) for the complete list of available options.
+Please refer to the documentation of [postgres](http://www.postgresql.org/docs/9.6/static/app-postgres.html) for the complete list of available options.
 
 ## Logs
 
@@ -343,7 +343,7 @@ docker run --name postgresql -itd --restart always \
 To access the PostgreSQL logs you can use `docker exec`. For example:
 
 ```bash
-docker exec -it postgresql tail -f /var/log/postgresql/postgresql-9.5.2-main.log
+docker exec -it postgresql tail -f /var/log/postgresql/postgresql-9.6.0-main.log
 ```
 
 # UID/GID mapping

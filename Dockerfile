@@ -2,7 +2,7 @@ FROM alpine:edge
 MAINTAINER sameer@damagehead.com
 
 ENV PG_APP_HOME="/etc/docker-postgresql" \
-    PG_VERSION=9.5.1 \
+    PG_VERSION=9.6.0 \
     PG_USER=postgres \
     PG_DATABASE=postgres \
     PG_HOME=/var/lib/postgresql \

@@ -132,7 +132,8 @@ configure_hot_standby() {
 }
 
 configure_log_archiving() {
-  if [[ ! -z ${PG_LOG_ARCHIVING} ]]; then
+  if [[ ${PG_LOG_ARCHIVING} ]]; then
+    echo "Enabling log archiving..."
     set_postgresql_param "archive_mode" "on"
 
     # This will return true if a variable is unset or set to the empty string ("").

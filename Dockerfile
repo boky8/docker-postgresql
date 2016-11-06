@@ -2,7 +2,7 @@ FROM alpine:edge
 MAINTAINER Bojan Cekrlic <verynotbad+github@gmail.com>
 
 ENV PG_APP_HOME="/etc/docker-postgresql" \
-    PG_VERSION=9.6.0 \
+    PG_VERSION=9.6.1 \
     PG_USER=postgres \
     PG_DATABASE=postgres \
     PG_HOME=/var/lib/postgresql \
@@ -27,7 +27,7 @@ RUN \
     if [[ "$ARCH" == "i*" ]]; then export ARCH=i386; fi && \
     if [[ "$ARCH" == "arm*" ]]; then export ARCH=armhf; fi && \
     echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    apk add --update acl bash curl tar perl python libuuid libxml2 libldap libxslt util-linux-dev python-dev perl-dev openldap-dev libxslt-dev libxml2-dev build-base linux-headers openssl-dev zlib-dev make gcc pcre-dev openssl-dev zlib-dev ncurses-dev readline-dev && \
+    apk add --update acl bash curl tar perl python libuuid libxml2 libldap libxslt util-linux-dev python-dev perl-dev openldap-dev libxslt-dev libxml2-dev build-base linux-headers libressl-dev zlib-dev make gcc pcre-dev zlib-dev ncurses-dev readline-dev && \
     cd /tmp && \
     curl --retry 5 --max-time 300 --connect-timeout 10 -fSL https://ftp.postgresql.org/pub/source/v$PG_VERSION/postgresql-$PG_VERSION.tar.bz2 | tar xfj - && \
     cd /tmp/postgres* && \

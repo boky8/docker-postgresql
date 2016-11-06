@@ -1,6 +1,6 @@
 PostgreSQL:
   restart: always
-  image: sameersbn/postgresql:9.5
+  image: postgresql-kitchensink:9.6.1
   ports:
     - "5432:5432"
   environment:

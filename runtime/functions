@@ -118,17 +118,28 @@ configure_ssl() {
 }
 
 configure_hot_standby() {
-  case ${REPLICATION_MODE} in
-    slave|snapshot|backup) ;;
-    *)
-      echo "Configuring hot standby..."
-      set_postgresql_param "wal_level" "hot_standby"
-      set_postgresql_param "max_wal_senders" "16"
-      set_postgresql_param "checkpoint_segments" "8"
-      set_postgresql_param "wal_keep_segments" "32"
-      set_postgresql_param "hot_standby" "on"
-      ;;
-  esac
+  if [[ ${PG_LOG_ARCHIVING} ]]; then
+    case ${REPLICATION_MODE} in
+      slave|snapshot|backup)
+        set_postgresql_param "wal_level" "minimal"
+        set_postgresql_param "hot_standby" "on"
+        ;;
+      *)
+        echo "Configuring master for WAL archiving..."
+        set_postgresql_param "wal_level" "replica"
+        set_postgresql_param "max_wal_senders" "16"
+        set_postgresql_param "checkpoint_segments" "8"
+        set_postgresql_param "wal_keep_segments" "32"
+        # Specifies whether or not you can connect and run queries during recovery, as described in Section 25.5.
+        # The default value is off. This parameter can only be set at server start.
+        # It only has effect during archive recovery or in standby mode.
+        set_postgresql_param "hot_standby" "on"
+        ;;
+    esac
+  else
+    set_postgresql_param "wal_level" "minimal"
+    set_postgresql_param "hot_standby" "off"
+  fi
 }
 
 configure_log_archiving() {
@@ -138,6 +149,7 @@ configure_log_archiving() {
 
     # This will return true if a variable is unset or set to the empty string ("").
     if [[ -z ${PG_LOG_ARCHIVING_COMMAND} ]]; then
+      echo "Using default log archiving system..."
       log_archive="${PG_HOME}/wal-backup/"
       mkdir -p ${log_archive}
       backup_in_progress="test \! -f ${log_archive}/backup_in_progress"
@@ -146,6 +158,7 @@ configure_log_archiving() {
       execute_shell="[[ \! -x ${log_archive}/archive.sh ]] || ([[ -x ${log_archive}/archive.sh ]] && ${log_archive}/archive.sh %f %p)"
       set_postgresql_param "archive_command" "(${backup_in_progress} || (${file_exists} || (${copy_file} && (${execute_shell}))))"
     else
+      echo "Using custom log archiving command ${PG_LOG_ARCHIVING_COMMAND}..."
       set_postgresql_param "archive_command" "${PG_LOG_ARCHIVING_COMMAND}"
     fi
   fi

@@ -1,5 +1,9 @@
 # Changelog
 
+**9.6.1-01**
+- postgresql: upgraded to 9.6.1
+- fix for `wal-backup.sh` script which misbehaved
+
 **9.6.0-01**
 - postgresql: upgraded to 9.6.0
 

@@ -9,11 +9,12 @@ ENV PG_APP_HOME="/etc/docker-postgresql" \
     PG_RUNDIR=/run/postgresql \
     PG_LOGDIR=/var/log/postgresql \
     PG_CERTDIR=/etc/postgresql/certs \
-    PG_LOG_ARCHIVING=false \
-    PG_LOG_ARCHIVING_COMMAND="${PG_HOME}/wal-backup.sh %f %p" \
     GOSU_VERSION=1.7 \
     LANG=en_US.utf8
 
+# Set to true/anything if you want to enable WAL archiving (e.g. for hot standby, point-in-time recovery)
+#ENV PG_LOG_ARCHIVING=true
+ENV PG_LOG_ARCHIVING_COMMAND="/var/lib/postgresql/wal-backup.sh %p %f"
 ENV PG_BINDIR=/usr/bin/ \
     PG_DATADIR=${PG_HOME}/${PG_VERSION}/main \
     MUSL_LOCPATH=${LANG}
@@ -53,22 +54,17 @@ RUN \
 	mkdir /docker-entrypoint-initdb.d && \
 	curl --retry 5 --max-time 120 --connect-timeout 5 -fsSL -o /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${ARCH}" && \
 	chmod +x /usr/local/bin/gosu && \
-	apk del util-linux-dev openldap-dev libxslt-dev libxml2-dev build-base linux-headers python-dev perl-dev openssl-dev pcre-dev zlib-dev expat pkgconf pkgconfig make gcc pcre-dev openssl-dev zlib-dev ncurses-dev readline-dev musl-dev g++ fortify-headers && \
+	apk del util-linux-dev openldap-dev libxslt-dev libxml2-dev build-base linux-headers python-dev perl-dev libressl-dev openssl-dev pcre-dev zlib-dev expat pkgconf pkgconfig make gcc pcre-dev openssl-dev zlib-dev ncurses-dev readline-dev musl-dev g++ fortify-headers && \
 	(rm -rf /var/cache/apk/* > /dev/null || true) && (rm -rf /tmp/* > /dev/null || true)
 
 COPY runtime/ ${PG_APP_HOME}/
 COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
-RUN \
-	mkdir -p ${PG_HOME}/wal-backup/ && \
-	echo "#!/bin/bash" > ${PG_HOME}/wal-backup.sh && \
-	echo "FULL_NAME=\$1" >> ${PG_HOME}/wal-backup.sh && \
-	echo "BASE_NAME=\$(basename \$FULL_NAME)" >> ${PG_HOME}/wal-backup.sh && \
-	echo -n "(test ! -f $PG_HOME/wal-backup/\$BASE_NAME.bz2 && " >> ${PG_HOME}/wal-backup.sh && \
-	echo "bzip2 \$FULL_NAME > $PG_HOME/wal-backup/\$BASE_NAME.bz2) || exit 1" >> ${PG_HOME}/wal-backup.sh && \
-	chmod 755 $PG_HOME/wal-backup.sh && \
-	echo "=== Created wal-backup.sh ===" && cat $PG_HOME/wal-backup.sh
+COPY wal-backup.sh ${PG_HOME}/wal-backup.sh
+RUN mkdir ${PG_HOME}/wal-backup && \
+    chown -R ${PG_USER}:${PG_USER} ${PG_HOME}/wal-backup && \
+    chmod 755 ${PG_HOME}/wal-backup.sh
 
 EXPOSE 5432/tcp
 VOLUME ["${PG_HOME}", "${PG_RUNDIR}"]

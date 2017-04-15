@@ -1,6 +1,6 @@
 PostgreSQL:
   restart: always
-  image: postgresql-kitchensink:9.6.2
+  image: boky/postgresql:latest
   ports:
     - "5432:5432"
   environment:

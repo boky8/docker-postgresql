@@ -1,7 +1,7 @@
 all: build
 
 build:
-	@docker build --tag=boky/postgresql-kitchensink .
+	@docker build --tag=boky/postgresql .
 
 release: build
-	@docker build --tag=postgresql-kitchensink:$(shell cat VERSION) .
+	@docker build --tag=postgresql:$(shell cat VERSION) .

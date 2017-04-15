@@ -1,6 +1,6 @@
-[![Circle CI](https://circleci.com/gh/boky/docker-postgresql.svg?style=shield)](https://circleci.com/gh/boky/docker-postgresql) [![Docker Repository on Quay.io](https://quay.io/repository/boky/postgresql/status "Docker Repository on Quay.io")](https://quay.io/repository/boky/postgresql) [![](https://badge.imagelayers.io/boky/postgresql.svg)](https://imagelayers.io/?images=boky/postgresql:latest 'Get your own badge on imagelayers.io')
+[![Circle CI](https://circleci.com/gh/bokysan/docker-postgresql/tree/kitchensink.svg?style=shield)](https://circleci.com/gh/bokysan/docker-postgresql/tree/kitchensink) [![Docker Repository on Quay.io](https://quay.io/repository/bokysan/postgres-kitchensink/status "Docker Repository on Quay.io")](https://quay.io/repository/bokysan/postgres-kitchensink) [![](https://images.microbadger.com/badges/image/boky/postgres-kitchensink.svg)](https://microbadger.com/images/boky/postgres-kitchensink "Get your own image badge on microbadger.com")
 
-# boky/postgresql:9.6.0-01
+# boky/postgres-kitchensink
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -22,7 +22,7 @@
   - [Creating a backup](#creating-a-backup)
   - [Command-line arguments](#command-line-arguments)
   - [Logs](#logs)
-  - [UID/GID mapping](#uid-gid-mapping)
+  - [UID/GID mapping](#uidgid-mapping)
 - [Maintenance](#maintenance)
   - [Upgrading](#upgrading)
   - [Shell Access](#shell-access)
@@ -30,9 +30,18 @@
 # Introduction
 
 `Dockerfile` to create a [Docker](https://www.docker.com/) container image for [PostgreSQL](http://postgresql.org/).
-It's based on [Alpine linux](http://www.alpinelinux.org/) so the target image is really small (around 25Mb).
+It's based on [Alpine linux](http://www.alpinelinux.org/). It includes several optional features of PostgreSQL, so the image is a bit bigger (around 130Mb). If
+you are looking for a smaller image, see [boky/postgres](https://hub.docker.com/r/boky/postgresql).
 
 PostgreSQL is an object-relational database management system (ORDBMS) with an emphasis on extensibility and standards-compliance [[source](https://en.wikipedia.org/wiki/PostgreSQL)].
+
+This image has been built with the following PostgreSQL modules:
+- `--with-openssl`: Support for TLS connections to Postgres (5433, see bellow how to enable)
+- `--with-ldap`: Support for [LDAP authentication](http://www.postgresql.org/docs/9.6/static/auth-methods.html)
+- `--with-libxml`: Support for the [XML column type](http://www.postgresql.org/docs/9.6/static/datatype-xml.html)
+- `--with-libxslt`: [XSLT transformations and XPath querying](http://www.postgresql.org/docs/9.6/static/xml2.html)
+- `--with-perl`: [PERL PL modules](http://www.postgresql.org/docs/9.6/static/plperl.html)
+- `--with-python`: [Python PL modules](http://www.postgresql.org/docs/9.6/static/plpython.html)
 
 ## Contributing
 
@@ -40,7 +49,6 @@ If you find this image useful here's how you can help:
 
 - Send a pull request with your awesome features and bug fixes
 - Help users resolve their [issues](../../issues?q=is%3Aopen+is%3Aissue).
-- Support the development of this image with a [donation](http://www.damagehead.com/donate/)
 
 ## Issues
 
@@ -58,18 +66,18 @@ If the above recommendations do not help then [report your issue](../../issues/n
 
 ## Installation
 
-Automated builds of the image are available on [Dockerhub](https://hub.docker.com/r/boky/postgresql) and is the recommended method of installation.
+Automated builds of the image are available on [Dockerhub](https://hub.docker.com/r/boky/postgres-kitchensink) and is the recommended method of installation.
 
-> **Note**: Builds are also available on [Quay.io](https://quay.io/repository/boky/postgresql)
+> **Note**: Builds are also available on [Quay.io](https://quay.io/repository/boky/postgres-kitchensink)
 
 ```bash
-docker pull boky/postgresql:9.6.0-01
+docker pull boky/postgres-kitchensink
 ```
 
 Alternatively you can build the image yourself.
 
 ```bash
-docker build -t boky/postgresql github.com/boky/docker-postgresql
+docker build -t boky/postgres-kitchensink github.com/boky8/docker-postgresql:kitchensink
 ```
 
 ## Quickstart
@@ -80,13 +88,13 @@ Start PostgreSQL using:
 docker run --name postgresql -itd --restart always \
   --publish 5432:5432 \
   --volume /srv/docker/postgresql:/var/lib/postgresql \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 Login to the PostgreSQL server using:
 
 ```bash
-docker exec -it postgresql sudo -u postgres psql
+docker exec -it postgresql psql -Upostgres
 ```
 
 *Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*
@@ -111,7 +119,7 @@ By default connections to the PostgreSQL server need to authenticated using a pa
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'PG_TRUST_LOCALNET=true' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 > **Note**
@@ -125,7 +133,7 @@ By default the `postgres` user is not assigned a password and as a result you ca
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'PG_PASSWORD=passw0rd' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 
@@ -141,7 +149,7 @@ A new PostgreSQL database user can be created by specifying the `DB_USER` and `D
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'DB_USER=dbuser' --env 'DB_PASS=dbuserpass' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 > **Notes**
@@ -158,10 +166,10 @@ A new PostgreSQL database can be created by specifying the `DB_NAME` variable wh
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'DB_NAME=dbname' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
-By default databases are created by copying the standard system database named `template1`. You can specify a different template for your database using the `DB_TEMPLATE` parameter. Refer to [Template Databases](http://www.postgresql.org/docs/9.5/static/manage-ag-templatedbs.html) for further information.
+By default databases are created by copying the standard system database named `template1`. You can specify a different template for your database using the `DB_TEMPLATE` parameter. Refer to [Template Databases](http://www.postgresql.org/docs/9.6/static/manage-ag-templatedbs.html) for further information.
 
 Additionally, more than one database can be created by specifying a comma separated list of database names in `DB_NAME`. For example, the following command creates two new databases named `dbname1` and `dbname2`.
 
@@ -170,7 +178,7 @@ Additionally, more than one database can be created by specifying a comma separa
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'DB_NAME=dbname1,dbname2' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 ## Granting user access to a database
@@ -181,19 +189,19 @@ If the `DB_USER` and `DB_PASS` variables are specified along with the `DB_NAME` 
 docker run --name postgresql -itd --restart always \
   --env 'DB_USER=dbuser' --env 'DB_PASS=dbuserpass' \
   --env 'DB_NAME=dbname1,dbname2' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 In the above example `dbuser` with be granted access to both the `dbname1` and `dbname2` databases.
 
 # Enabling extensions
 
-The image also packages the [postgres contrib module](http://www.postgresql.org/docs/9.5/static/contrib.html). A comma separated list of modules can be specified using the `DB_EXTENSION` parameter.
+The image also packages the [postgres contrib module](http://www.postgresql.org/docs/9.6/static/contrib.html). A comma separated list of modules can be specified using the `DB_EXTENSION` parameter.
 
 ```bash
 docker run --name postgresql -itd \
   --env 'DB_NAME=db1,db2' --env 'DB_EXTENSION=unaccent,pg_trgm' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 The above command enables the `unaccent` and `pg_trgm` modules on the databases listed in `DB_NAME`, namely `db1` and `db2`.
@@ -209,7 +217,7 @@ Similar to the creation of a database user, a new PostgreSQL replication user ca
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'REPLICATION_USER=repluser' --env 'REPLICATION_PASS=repluserpass' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 > **Notes**
@@ -231,7 +239,7 @@ Begin by creating the master node of our cluster:
 docker run --name postgresql-master -itd --restart always \
   --env 'DB_USER=dbuser' --env 'DB_PASS=dbuserpass' --env 'DB_NAME=dbname' \
   --env 'REPLICATION_USER=repluser' --env 'REPLICATION_PASS=repluserpass' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 Notice that no additional arguments are specified while starting the master node of the cluster.
@@ -246,7 +254,7 @@ docker run --name postgresql-slave01 -itd --restart always \
   --env 'REPLICATION_MODE=slave' --env 'REPLICATION_SSLMODE=prefer' \
   --env 'REPLICATION_HOST=master' --env 'REPLICATION_PORT=5432'  \
   --env 'REPLICATION_USER=repluser' --env 'REPLICATION_PASS=repluserpass' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 *In the above command, we used docker links so that we can address the master node using the `master` alias in `REPLICATION_HOST`.*
@@ -285,7 +293,7 @@ docker run --name postgresql-snapshot -itd --restart always \
   --env 'REPLICATION_MODE=snapshot' --env 'REPLICATION_SSLMODE=prefer' \
   --env 'REPLICATION_HOST=master' --env 'REPLICATION_PORT=5432'  \
   --env 'REPLICATION_USER=repluser' --env 'REPLICATION_PASS=repluserpass' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 The difference between a slave and a snapshot is that a slave is read-only and updated whenever the master data is updated (streaming replication), while a snapshot is read-write and is not updated after the initial snapshot of the data from the master.
@@ -296,7 +304,7 @@ This is useful for developers to quickly snapshot the current state of a live da
 
 Just as the case of setting up a slave node or generating a snapshot, you can also create a backup of the data on the master by specifying `REPLICATION_MODE=backup`.
 
-> The backups are generated with [pg_basebackup](http://www.postgresql.org/docs/9.5/static/app-pgbasebackup.html) using the replication protocol.
+> The backups are generated with [pg_basebackup](http://www.postgresql.org/docs/9.6/static/app-pgbasebackup.html) using the replication protocol.
 
 Once the master node is created as specified in [Setting up a replication cluster](#setting-up-a-replication-cluster), you can create a point-in-time backup using:
 
@@ -307,7 +315,7 @@ docker run --name postgresql-backup -it --rm \
   --env 'REPLICATION_HOST=master' --env 'REPLICATION_PORT=5432'  \
   --env 'REPLICATION_USER=repluser' --env 'REPLICATION_PASS=repluserpass' \
   --volume /srv/docker/backups/postgresql.$(date +%Y%m%d%H%M%S):/var/lib/postgresql \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 Once the backup is generated, the container will exit and the backup of the master data will be available at `/srv/docker/backups/postgresql.XXXXXXXXXXXX/`. Restoring the backup involves starting a container with the data in `/srv/docker/backups/postgresql.XXXXXXXXXXXX`.
@@ -318,10 +326,10 @@ You can customize the launch command of PostgreSQL server by specifying argument
 
 ```bash
 docker run --name postgresql -itd --restart always \
-  boky/postgresql:9.6.0-01 -c log_connections=on
+  boky/postgres-kitchensink -c log_connections=on
 ```
 
-Please refer to the documentation of [postgres](http://www.postgresql.org/docs/9.5/static/app-postgres.html) for the complete list of available options.
+Please refer to the documentation of [postgres](http://www.postgresql.org/docs/9.6/static/app-postgres.html) for the complete list of available options.
 
 ## Logs
 
@@ -329,13 +337,13 @@ By default the PostgreSQL server logs are sent to the standard output. Using the
 
 ```bash
 docker run --name postgresql -itd --restart always \
-  boky/postgresql:9.6.0-01 -c logging_collector=on
+  boky/postgres-kitchensink -c logging_collector=on
 ```
 
 To access the PostgreSQL logs you can use `docker exec`. For example:
 
 ```bash
-docker exec -it postgresql tail -f /var/log/postgresql/postgresql-9.6.0-main.log
+docker exec -it postgresql tail -f /var/log/postgresql/postgresql-9.6.2-main.log
 ```
 
 # UID/GID mapping
@@ -351,7 +359,7 @@ For example, if you want to assign the `postgres` user of the container the UID 
 ```bash
 docker run --name postgresql -itd --restart always \
   --env 'USERMAP_UID=999' --env 'USERMAP_GID=999' \
-  boky/postgresql:9.6.0-01
+  boky/postgres-kitchensink
 ```
 
 # Maintenance
@@ -363,7 +371,7 @@ To upgrade to newer releases:
   1. Download the updated Docker image:
 
   ```bash
-  docker pull boky/postgresql:9.6.0-01
+  docker pull boky/postgres-kitchensink
   ```
 
   2. Stop the currently running image:
@@ -383,7 +391,7 @@ To upgrade to newer releases:
   ```bash
   docker run --name postgresql -itd \
     [OPTIONS] \
-    boky/postgresql:9.6.0-01
+    boky/postgres-kitchensink
   ```
 
 ## Creating databases, access the psql console

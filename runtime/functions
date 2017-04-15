@@ -118,31 +118,48 @@ configure_ssl() {
 }
 
 configure_hot_standby() {
-  case ${REPLICATION_MODE} in
-    slave|snapshot|backup) ;;
-    *)
-      echo "Configuring hot standby..."
-      set_postgresql_param "wal_level" "hot_standby"
-      set_postgresql_param "max_wal_senders" "16"
-      set_postgresql_param "checkpoint_segments" "8"
-      set_postgresql_param "wal_keep_segments" "32"
-      set_postgresql_param "hot_standby" "on"
-      ;;
-  esac
+  if [[ ${PG_LOG_ARCHIVING} ]]; then
+    case ${REPLICATION_MODE} in
+      slave|snapshot|backup)
+        set_postgresql_param "wal_level" "minimal"
+        set_postgresql_param "hot_standby" "on"
+        ;;
+      *)
+        echo "Configuring master for WAL archiving..."
+        set_postgresql_param "wal_level" "replica"
+        set_postgresql_param "max_wal_senders" "16"
+        set_postgresql_param "checkpoint_segments" "8"
+        set_postgresql_param "wal_keep_segments" "32"
+        # Specifies whether or not you can connect and run queries during recovery, as described in Section 25.5.
+        # The default value is off. This parameter can only be set at server start.
+        # It only has effect during archive recovery or in standby mode.
+        set_postgresql_param "hot_standby" "on"
+        ;;
+    esac
+  else
+    set_postgresql_param "wal_level" "minimal"
+    set_postgresql_param "hot_standby" "off"
+  fi
 }
 
 configure_log_archiving() {
-  if [[ ${PG_LOG_ARCHIVING} == true ]] || [[ ! -z ${PG_LOG_ARCHIVING_COMMAND} ]]; then
-    log_archive="${PG_HOME}/${PG_VERSION}/log-archive/"
-    mkdir -p ${log_archive}
+  if [[ ! -z ${PG_LOG_ARCHIVING} ]]; then
+    echo "Enabling log archiving..."
     set_postgresql_param "archive_mode" "on"
 
-    if [[ -z ${PG_LOG_ARCHIVING_COMMAND} ]]; then
+    # This will return true if a variable is unset or set to the empty string ("").
+    if [[ ! -z ${PG_LOG_ARCHIVING_COMMAND} ]]; then
+      echo "Using default log archiving system..."
+      log_archive="${PG_HOME}/wal-backup/"
+      mkdir -p ${log_archive}
       backup_in_progress="test \! -f ${log_archive}/backup_in_progress"
       file_exists="test -f ${log_archive}/%f"
       copy_file="cp %p ${log_archive}/%f"
       execute_shell="[[ \! -x ${log_archive}/archive.sh ]] || ([[ -x ${log_archive}/archive.sh ]] && ${log_archive}/archive.sh %f %p)"
       set_postgresql_param "archive_command" "(${backup_in_progress} || (${file_exists} || (${copy_file} && (${execute_shell}))))"
+    else
+      echo "Using custom log archiving command ${PG_LOG_ARCHIVING_COMMAND}..."
+      set_postgresql_param "archive_command" "${PG_LOG_ARCHIVING_COMMAND}"
     fi
   fi
 }
@@ -267,20 +284,19 @@ initialize_database() {
   set_postgresql_param "log_directory" "${PG_LOGDIR}"
   set_postgresql_param "log_filename" "postgresql-${PG_VERSION}-main.log"
 
-  # allow remote connections to postgresql database
-  set_hba_param "host all all 0.0.0.0/0 md5"
-}
-
-trust_localnet() {
+  # trust connections from local network
   if [[ ${PG_TRUST_LOCALNET} == true ]]; then
     echo "Trusting connections from the local network..."
     set_hba_param "host all all samenet trust"
   fi
+
+  # allow remote connections to postgresql database
+  set_hba_param "host all all 0.0.0.0/0 md5"
 }
 
 set_resolvconf_perms() {
-  echo "Setting resolv ACLs..."
-  setfacl -m user:${PG_USER}:r /etc/resolv.conf
+  echo "Setting resolv.conf ACLs..."
+  setfacl -m user:${PG_USER}:r /etc/resolv.conf || true
 }
 
 configure_recovery() {
@@ -392,7 +408,7 @@ create_replication_user() {
 
 
 start_postgres_daemon() {
-  # internal start of server in order to allow set-up using psql-client   
+  # internal start of server in order to allow set-up using psql-client
   # does not listen on TCP/IP and waits until start finishes
   echo "Starting PostgreSQL ${PG_VERSION}: pg_ctl -D $PG_DATADIR -o ${EXTRA_ARGS} -c listen_addresses='' -w start"
   gosu postgres pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
@@ -417,15 +433,15 @@ run_startup_scripts() {
       case "$f" in
         *.sh)
           echo "$0: running $f"
-          . "$f" 
+          . "$f"
           ;;
-        *.sql) 
+        *.sql)
           echo "$0: running $f"
           psql -v ON_ERROR_STOP=1 --username "$PG_USER" --dbname "$PG_DATABASE" < "$f"
-          echo 
+          echo
           ;;
         *)
-          echo "$0: ignoring $f" 
+          echo "$0: ignoring $f"
           ;;
         esac
     echo
@@ -438,7 +454,6 @@ configure_postgresql() {
   initialize_database
   configure_recovery
   configure_ssl
-  trust_localnet
 
   # start postgres server internally for the creation of users and databases
   rm -rf ${PG_DATADIR}/postmaster.pid

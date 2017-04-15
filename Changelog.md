@@ -1,5 +1,19 @@
 # Changelog
 
+**9.6.2-01**
+- upgraded to 9.6.2
+- fix for misbehaved PG_LOG_ARCHIVING variable
+
+**9.6.1-01**
+- postgresql: upgraded to 9.6.1
+- fix for `wal-backup.sh` script which misbehaved
+
+**9.6.0-01**
+- postgresql: upgraded to 9.6.0
+
+**9.5**
+- postgresql: upgrade to 9.5
+
 **9.4-17**
 - added `DB_EXTENSION` configuration parameter
 

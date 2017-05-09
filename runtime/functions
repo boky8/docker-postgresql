@@ -410,7 +410,7 @@ create_replication_user() {
 start_postgres_daemon() {
   # internal start of server in order to allow set-up using psql-client
   # does not listen on TCP/IP and waits until start finishes
-  echo "Starting PostgreSQL ${PG_VERSION}: pg_ctl -D $PG_DATADIR -o ${EXTRA_ARGS} -c listen_addresses='' -w start"
+  echo "Starting PostgreSQL ${PG_VERSION}: pg_ctl -D $PG_DATADIR -o "${EXTRA_ARGS} -c listen_addresses=''" -w start"
   gosu postgres pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
 }
 

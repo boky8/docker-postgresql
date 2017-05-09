@@ -47,19 +47,20 @@ setup_postgres() {
 # default behaviour is to launch postgres
 if [[ -z ${1} ]]; then
   [[ ${DEBUG} == true ]] && echo "Will start up the daemon..."
-
   setup_postgres
-
-  echo "Starting PostgreSQL ${PG_VERSION}: ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}"
-  exec gosu postgres ${PG_BINDIR}/postgres -D ${PG_DATADIR} ${EXTRA_ARGS}
+  set_postgresql_param "listen_addresses" "*"
+  echo "Starting PostgreSQL ${PG_VERSION}: ${PG_BINDIR}/postgres -D \"${PG_DATADIR}\" ${EXTRA_ARGS}"
+  exec gosu postgres ${PG_BINDIR}/postgres -D "${PG_DATADIR}" ${EXTRA_ARGS}
 else
+  [[ ${DEBUG} == true ]] && echo "Going through the second workflow..."
+
   # Our scripts for checking if postgres is online may produce non-zero exit codes.
   # Make sure bash doesn't stop executing when such command is encountered.
   set +e
 
   # This second flow is only usable with DOCKER EXEC or DOCKER RUN.
   # We will check how we are executed (basically if postgres is running or not)
-  # Please note that IT IS A VERY BAD IDEA to run anothe posgres instance
+  # Please note that IT IS A VERY BAD IDEA to run another posgres instance
   # From a RUNNING postgres directory. So, to sum up:
   # - use "docker exec" to enter a running instance
   # - use "docker run" to modify the data of an existing (shut-down) instance, if you try to do it on
@@ -67,6 +68,7 @@ else
   [[ ${DEBUG} == true ]] && echo "Verifying if we are running from an existing container..."
   [[ ${DEBUG} == true ]] && gosu postgres pg_ctl -D "$PG_DATADIR" status
   [[ ${DEBUG} == true ]] && echo "Will execute: exec gosu postgres" "$@"
+  [[ ${DEBUG} == true ]] && gosu postgres pg_ctl -D "$PG_DATADIR" status
 
   if [ `gosu postgres pg_ctl -D "$PG_DATADIR" status 2>&1 | grep -q "server is running"` ]; then
     # Support the "exec" option

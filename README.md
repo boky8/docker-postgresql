@@ -1,6 +1,6 @@
 [![Circle CI](https://circleci.com/gh/bokysan/docker-postgresql/tree/master.svg?style=shield)](https://circleci.com/gh/bokysan/docker-postgresql/tree/master) [![Docker Repository on Quay.io](https://quay.io/repository/bokysan/postgres/status "Docker Repository on Quay.io")](https://quay.io/repository/bokysan/postgres) [![](https://images.microbadger.com/badges/image/boky/postgres.svg)](https://microbadger.com/images/boky/postgres "Get your own image badge on microbadger.com")
 
-# boky/postgres:9.6.2-01
+# boky/postgres:9.6.2-02
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)

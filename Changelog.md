@@ -1,5 +1,8 @@
 # Changelog
 
+**9.6.2-02**
+- forced listening on all interfaces on startup
+
 **9.6.2-01**
 - upgraded to 9.6.2
 - fix for misbehaved PG_LOG_ARCHIVING variable

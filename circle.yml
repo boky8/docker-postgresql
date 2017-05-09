@@ -7,9 +7,9 @@ dependencies:
   override:
     #    - docker info
     #    - if [[ -e ~/docker-postgres/image.tar ]]; then docker load --input ~/docker-postgresql/image.tar; fi
-    - docker build -t boky/postgres .
-    #    - mkdir -p ~/docker-postgres; docker save --output ~/docker-postgresql/image.tar boky/postgres
+    - docker build -t boky/postgresql .
+    #    - mkdir -p ~/docker-postgres; docker save --output ~/docker-postgresql/image.tar boky/postgresql
 test:
   override:
-    - docker run -d --name=postgresql boky/postgres; sleep 10; docker ps; docker stop postgresql; sleep 5; docker ps -a
-    - docker run -it -e DEBUG=true --volumes-from=postgresql boky/postgres psql -U postgres -c "\conninfo"
+    - docker run -d --name=postgresql boky/postgresql; sleep 10; docker ps; docker stop postgresql; sleep 5; docker ps -a
+    - docker run -it -e DEBUG=true --volumes-from=postgresql boky/postgresql psql -U postgres -c "\conninfo"

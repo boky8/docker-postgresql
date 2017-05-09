@@ -66,6 +66,7 @@ RUN mkdir ${PG_HOME}/wal-backup && \
     chown -R ${PG_USER}:${PG_USER} ${PG_HOME}/wal-backup && \
     chmod 755 ${PG_HOME}/wal-backup.sh
 
+HEALTHCHECK --interval=10s --timeout=5s --retries=6 CMD (netstat -an | grep :5432 | grep LISTEN && echo "SELECT 1" | psql -1 -Upostgres -v ON_ERROR_STOP=1 -hlocalhost postgres) || exit 1
 EXPOSE 5432/tcp
 VOLUME ["${PG_HOME}", "${PG_RUNDIR}"]
 WORKDIR ${PG_HOME}

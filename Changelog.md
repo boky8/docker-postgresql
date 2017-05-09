@@ -2,6 +2,7 @@
 
 **9.6.2-02**
 - forced listening on all interfaces on startup
+- added a docker HEALTCHECK command to the container
 
 **9.6.2-01**
 - upgraded to 9.6.2

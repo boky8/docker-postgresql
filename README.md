@@ -1,4 +1,10 @@
-[![Circle CI](https://circleci.com/gh/bokysan/docker-postgresql/tree/master.svg?style=shield)](https://circleci.com/gh/bokysan/docker-postgresql/tree/master)  [![](https://images.microbadger.com/badges/image/boky/postgresql.svg)](https://microbadger.com/images/boky/postgresql "Get your own image badge on microbadger.com")
+[![Circle CI](https://circleci.com/gh/bokysan/postgresql/tree/master.svg?style=shield)](https://circleci.com/gh/bokysan/postgresql/tree/master)
+
+[![](https://images.microbadger.com/badges/image/boky/postgresql.svg)](https://microbadger.com/images/boky/postgresql "Get your own image badge on microbadger.com")
+
+[![](https://images.microbadger.com/badges/version/boky/postgresql.svg)](https://microbadger.com/images/boky/postgresql "Get your own version badge on microbadger.com")
+
+[![](https://images.microbadger.com/badges/commit/boky/postgresql.svg)](https://microbadger.com/images/boky/postgresql "Get your own commit badge on microbadger.com")
 
 # boky/postgresql:9.6.2-02
 

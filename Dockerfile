@@ -67,6 +67,20 @@ RUN mkdir ${PG_HOME}/wal-backup && \
     chmod 755 ${PG_HOME}/wal-backup.sh
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=6 CMD (netstat -an | grep :5432 | grep LISTEN && echo "SELECT 1" | psql -1 -Upostgres -v ON_ERROR_STOP=1 -hlocalhost postgres) || exit 1
+
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+LABEL org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.name="PostgreSQL 9.6.2 Kitchensink edition" \
+      org.label-schema.description="PostgreSQL 9.6.2 on Alphine linux, with lots of optional modules" \
+      org.label-schema.url="https://github.com/bokysan/postgresql" \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-url="https://github.com/bokysan/postgresql" \
+      org.label-schema.vendor="Boky" \
+      org.label-schema.version="9.6.2-02" \
+      org.label-schema.schema-version="1.0"
+
 EXPOSE 5432/tcp
 VOLUME ["${PG_HOME}", "${PG_RUNDIR}"]
 WORKDIR ${PG_HOME}

@@ -1,5 +1,10 @@
 # Changelog
 
+**10.4-01**
+- upgraded Postgres to 10.4
+- upgraded GOSU to 1.10
+- removed depricated MAINTAINER tag and replaced it with LABEL
+
 **9.6.2-02**
 - forced listening on all interfaces on startup
 - added a docker HEALTCHECK command to the container

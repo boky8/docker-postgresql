@@ -1,5 +1,9 @@
 # Changelog
 
+**10.5-01**
+- upgraded ot Postgres 10.5
+- added compatibility layer to be able to create database with the same variables as with the original image
+
 **10.4-01**
 - upgraded Postgres to 10.4
 - upgraded GOSU to 1.10

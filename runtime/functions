@@ -7,6 +7,53 @@ PG_HBA_CONF=${PG_DATADIR}/pg_hba.conf
 PG_IDENT_CONF=${PG_DATADIR}/pg_ident.conf
 PG_RECOVERY_CONF=${PG_DATADIR}/recovery.conf
 
+
+file_env() {
+  local var="$1"
+  local fileVar="${var}_FILE"
+  local def="${2:-}"
+  if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
+      echo >&2 "error: both $var and $fileVar are set (but are exclusive)"
+      exit 1
+  fi
+  local val="$def"
+  if [ "${!var:-}" ]; then
+      val="${!var}"
+  elif [ "${!fileVar:-}" ]; then
+      val="$(< "${!fileVar}")"
+  fi
+  export "$var"="$val"
+  unset "$fileVar"
+}
+
+
+file_env 'POSTGRES_INITDB_ARGS'
+file_env 'POSTGRES_PASSWORD'
+
+# Compatibility layer with the official postgres image
+if [[ ! -z "$PGUSER" ]]; then
+  echo "Compatility layer: setting PG_USER to: $PG_USER"
+  PG_USER="$PGUSER"
+fi
+
+if [[ ! -z "$POSTGRES_USER" ]]; then
+  echo "Compatility layer: setting DB_USER to: $POSTGRES_USER"
+  DB_USER="$POSTGRES_USER"
+fi
+
+if [[ ! -z "$POSTGRES_PASSWORD" ]]; then
+  echo "Compatility layer: setting DB_PASS from POSTGRES_PASSWORD"
+  DB_PASS="$POSTGRES_PASSWORD"
+fi
+
+
+if [[ ! -z "$POSTGRES_DB" ]]; then
+  echo "Compatility layer: setting DB_NAME to: $POSTGRES_DB"
+  DB_NAME="$POSTGRES_DB"
+fi
+
+
+
 ## Execute command as PG_USER
 exec_as_postgres() {
   gosu postgres "$@"
@@ -258,7 +305,9 @@ initialize_database() {
         fi
 
         exec_as_postgres ${PG_BINDIR}/initdb --pgdata=${PG_DATADIR} \
-          --username=${PG_USER} --encoding=unicode --auth=trust ${PG_PASSWORD:+--pwfile=/tmp/pwfile} >/dev/null
+          --username=${PG_USER} \
+          --encoding=unicode \
+          --auth=trust ${PG_PASSWORD:+--pwfile=/tmp/pwfile} ${POSTGRES_INITDB_ARGS} >/dev/null
 
         if [[ -n ${PG_OLD_VERSION} ]]; then
           PG_OLD_BINDIR=/usr/lib/postgresql/${PG_OLD_VERSION}/bin

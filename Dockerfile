@@ -2,7 +2,7 @@ FROM alpine:edge
 LABEL maintainer="Bojan Cekrlic <https://github.com/bokysan/postgresql>"
 
 ENV PG_APP_HOME="/etc/docker-postgresql" \
-    PG_VERSION=10.4 \
+    PG_VERSION=10.5 \
     PG_USER=postgres \
     PG_DATABASE=postgres \
     PG_HOME=/var/lib/postgresql \

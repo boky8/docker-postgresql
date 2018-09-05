@@ -6,7 +6,7 @@
 
 [![](https://images.microbadger.com/badges/commit/boky/postgresql.svg)](https://microbadger.com/images/boky/postgresql "Get your own commit badge on microbadger.com")
 
-# boky/postgresql:10.4-01
+# boky/postgresql
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -48,7 +48,13 @@ This image has been built with the following PostgreSQL modules:
 - `--with-perl`: [PERL PL modules](http://www.postgresql.org/docs/10/static/plperl.html)
 - `--with-python`: [Python PL modules](http://www.postgresql.org/docs/10/static/plpython.html)
 
+Note that this is a for of the excellent work done by [sameersbn](https://github.com/sameersbn/docker-postgresql) but with the following differences:
+- based on Alpine to reduce the image size
+- Postgres is compiled directly, which a few plugins (this should also make it easier to build this image on other platforms)
+
+
 ## Contributing
+
 
 If you find this image useful here's how you can help:
 

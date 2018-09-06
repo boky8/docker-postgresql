@@ -37,8 +37,12 @@ file_env 'POSTGRES_PASSWORD'
 
 # Compatibility layer with the official postgres image
 if [[ ! -z "$PGUSER" ]]; then
-  echo -e "${orange}‣ Compatility layer: setting PG_USER to: ${yellow_bold}'$PG_USER'${reset}"
-  PG_USER="$PGUSER"
+  # Official image uses this user for command line tools, e.g.
+  # PGUSER="${PGUSER:-postgres}" pg_ctl -D "$PGDATA" -m fast -w stop
+  # PGUSER is the POSTGRES user used with these tools
+  # our PG_USER, however, is the system account that's used for logging in.
+  echo -e "${orange}‣ Compatility warning: ${yellow}this image always uses ${yellow_bold}postgres${yellow} for ${yellow_bold}PG_USER${yellow}. Ignoring setting.${reset}"
+  # PGUSER="${PGUSER:-postgres}"
 fi
 
 if [[ ! -z "$POSTGRES_USER" ]]; then
@@ -496,18 +500,22 @@ create_replication_user() {
   fi
 }
 
+start_postgres() {
+  echo -e "${orange}‣ Starting PostgreSQL ${PG_VERSION}: ${yellow_bold}${PG_BINDIR}postgres -D \"${PG_DATADIR}\" ${EXTRA_ARGS}${reset}"
+  exec gosu ${PG_USER} ${PG_BINDIR}/postgres -D "${PG_DATADIR}" ${EXTRA_ARGS}
+}
 
 start_postgres_daemon() {
   # internal start of server in order to allow set-up using psql-client
   # does not listen on TCP/IP and waits until start finishes
   echo -e "${orange}‣ Starting PostgreSQL ${PG_VERSION}: ${yellow_bold}pg_ctl -D $PG_DATADIR -o "${EXTRA_ARGS} -c listen_addresses=''" -w start${reset}"
-  gosu postgres pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
+  gosu ${PG_USER} pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
 }
 
 stop_postgres_daemon() {
   # Stop the daemon
   echo -e "${orange}‣ Stoppping PostgreSQL...${reset}"
-  gosu postgres pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
+  gosu ${PG_USER} pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
 }
 
 

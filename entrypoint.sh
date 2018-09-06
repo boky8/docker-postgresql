@@ -49,8 +49,7 @@ if [[ -z ${1} ]]; then
   [[ ${DEBUG} == true ]] && echo "Will start up the daemon..."
   setup_postgres
   set_postgresql_param "listen_addresses" "*"
-  echo -e "\033[38;5;208m‣ Starting PostgreSQL ${PG_VERSION}: \033[38;5;226m${PG_BINDIR}/postgres -D \"${PG_DATADIR}\" ${EXTRA_ARGS}\033[0m"
-  exec gosu postgres ${PG_BINDIR}/postgres -D "${PG_DATADIR}" ${EXTRA_ARGS}
+  start_postgres
 else
   [[ ${DEBUG} == true ]] && echo "Going through the second workflow..."
 

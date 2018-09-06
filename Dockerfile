@@ -9,7 +9,7 @@ RUN \
     echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
     echo -e "\033[93m===== Downloading dependencies =====\033[0m" && \
     apk update && apk upgrade && \
-    apk add --update acl bash curl tar perl python libuuid libxml2 libldap libxslt xz && \
+    apk add --update tzdata acl bash curl tar perl python libuuid libxml2 libldap libxslt xz && \
     (rm -rf /var/cache/apk/* > /dev/null || true) && (rm -rf /tmp/* > /dev/null || true) && \
     mkdir -p /tmp/files/
 COPY files/* /tmp/files/
@@ -28,7 +28,7 @@ RUN \
 	curl --retry 5 --max-time 120 --connect-timeout 5 -fsSL -o /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${ARCH}" && \
 	chmod +x /usr/local/bin/gosu
 
-# ~~~~~~~ DOWNLOAD POSTGRESQL ~~~~~~~
+# ~~~~~~~ BUILD POSTGRESQL ~~~~~~~
 
 FROM base
 LABEL maintainer="Bojan Cekrlic <https://github.com/bokysan/postgresql>"
@@ -72,6 +72,9 @@ RUN \
     cat /tmp/postgres*.tar.bz2 | tar xfj - && \
     mv /tmp/postgresql-${PG_VERSION} /tmp/postgres && \
     cd /tmp/postgres && \
+    # explicitly update autoconf config.guess and config.sub so they support more arches/libcs
+    curl -o config/config.guess --retry 5 --max-time 300 --connect-timeout 10 -fSL 'https://git.savannah.gnu.org/cgit/config.git/plain/config.guess?id=7d3d27baf8107b630586c962c057e22149653deb' && \
+    curl -o config/config.sub --retry 5 --max-time 300 --connect-timeout 10 -fSL 'https://git.savannah.gnu.org/cgit/config.git/plain/config.sub?id=7d3d27baf8107b630586c962c057e22149653deb' && \
     if [ -f /tmp/files/*.patch ]; then for i in /tmp/files/*.patch; do patch -p1 -i $i; done; fi && \
     rm -f /tmp/postgres*.tar.bz2 && \
     echo -e "\033[93m===== Building Postgres, please be patient... =====\033[0m" && \
@@ -79,6 +82,8 @@ RUN \
     ./configure \
 		--build=$CBUILD \
 		--host=$CHOST \
+        --enable-integer-datetimes \
+		--enable-thread-safety \
 		--prefix=/usr \
 		--mandir=/usr/share/man \
 		--with-openssl \
@@ -87,9 +92,10 @@ RUN \
 		--with-libxslt \
 		--with-perl \
 		--with-python \
+        --with-system-tzdata=/usr/share/zoneinfo \
 		--with-libedit-preferred \
 		--with-uuid=e2fs && \
-	make -j4 world && make install install-docs && make -C contrib install && \
+	make -j4 world && make install && make -C contrib install && \
 	install -D -m755 /tmp/files/postgresql.initd /etc/init.d/postgresql && \
 	install -D -m644 /tmp/files/postgresql.confd /etc/conf.d/postgresql && \
 	install -D -m755 /tmp/files/pg-restore.initd /etc/init.d/pg-restore && \
@@ -97,6 +103,7 @@ RUN \
     echo -e "\033[93m===== Cleaning up =====\033[0m" && \
 	apk del util-linux-dev openldap-dev libxslt-dev libxml2-dev build-base linux-headers python-dev perl-dev libressl-dev openssl-dev pcre-dev zlib-dev expat pkgconf pkgconfig make gcc pcre-dev openssl-dev zlib-dev ncurses-dev readline-dev musl-dev g++ fortify-headers && \
     (rm -rf /var/cache/apk/* > /dev/null || true) && (rm -rf /tmp/* > /dev/null || true) && \
+    (rm -rf /usr/src/postgresql /usr/local/share/doc /usr/local/share/man || true) && \
     echo -e "\033[93m===== Preparing environment =====\033[0m" && \
 	mkdir /docker-entrypoint-initdb.d && \
     mkdir -p ${PG_HOME}/wal-backup && chown -R ${PG_USER}:${PG_USER} ${PG_HOME}/wal-backup

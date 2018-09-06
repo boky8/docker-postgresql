@@ -6,6 +6,12 @@ PG_CONF=${PG_DATADIR}/postgresql.conf
 PG_HBA_CONF=${PG_DATADIR}/pg_hba.conf
 PG_IDENT_CONF=${PG_DATADIR}/pg_ident.conf
 PG_RECOVERY_CONF=${PG_DATADIR}/recovery.conf
+reset="\033[0m"
+yellow="\033[38;5;178m"
+yellow_bold="\033[38;5;226m"
+red="\033[91m"
+orange="\033[38;5;208m"
+regular=""
 
 
 file_env() {
@@ -26,33 +32,30 @@ file_env() {
   unset "$fileVar"
 }
 
-
 file_env 'POSTGRES_INITDB_ARGS'
 file_env 'POSTGRES_PASSWORD'
 
 # Compatibility layer with the official postgres image
 if [[ ! -z "$PGUSER" ]]; then
-  echo "Compatility layer: setting PG_USER to: $PG_USER"
+  echo -e "${orange}‣ Compatility layer: setting PG_USER to: ${yellow_bold}'$PG_USER'${reset}"
   PG_USER="$PGUSER"
 fi
 
 if [[ ! -z "$POSTGRES_USER" ]]; then
-  echo "Compatility layer: setting DB_USER to: $POSTGRES_USER"
+  echo -e "${orange}‣ Compatility layer: setting DB_USER to: ${yellow_bold}'$POSTGRES_USER'${reset}"
   DB_USER="$POSTGRES_USER"
 fi
 
 if [[ ! -z "$POSTGRES_PASSWORD" ]]; then
-  echo "Compatility layer: setting DB_PASS from POSTGRES_PASSWORD"
+  echo -e "${orange}‣ Compatility layer: setting DB_PASS from ${yellow_bold}POSTGRES_PASSWORD${reset}"
   DB_PASS="$POSTGRES_PASSWORD"
 fi
 
 
 if [[ ! -z "$POSTGRES_DB" ]]; then
-  echo "Compatility layer: setting DB_NAME to: $POSTGRES_DB"
+  echo -e "${orange}‣ Compatility layer: setting DB_NAME to: ${yellow_bold}'$POSTGRES_DB'${reset}"
   DB_NAME="$POSTGRES_DB"
 fi
-
-
 
 ## Execute command as PG_USER
 exec_as_postgres() {
@@ -114,7 +117,7 @@ set_postgresql_param() {
     local current=$(exec_as_postgres sed -n -e "s/^\(${key} = '\)\([^ ']*\)\(.*\)$/\2/p" ${PG_CONF})
     if [[ "${current}" != "${value}" ]]; then
       if [[ ${verbosity} == verbose ]]; then
-        echo "‣ Setting postgresql.conf parameter: ${key} = '${value}'"
+        echo -e "${yellow}‣ Setting postgresql.conf parameter: ${yellow_bold}${key} = '${value}'${reset}"
       fi
       value="$(echo "${value}" | sed 's|[@]|\\@|g')"
       exec_as_postgres sed -r -i "s@^[#]*[ ]*${key} = .*@${key} = '${value}'@" ${PG_CONF}
@@ -130,8 +133,8 @@ set_recovery_param() {
     local current=$(exec_as_postgres sed -n -e "s/^\(.*\)\(${key}=\)\([^ ']*\)\(.*\)$/\3/p" ${PG_RECOVERY_CONF})
     if [[ "${current}" != "${value}" ]]; then
       case ${hide} in
-        true)  echo "‣ Setting primary_conninfo parameter: ${key}" ;;
-        *) echo "‣ Setting primary_conninfo parameter: ${key} = '${value}'" ;;
+        true)  echo -e "${yellow}‣ Setting primary_conninfo parameter: ${key}${reset}" ;;
+        *) echo -e "${yellow}‣ Setting primary_conninfo parameter: ${key} = '${value}'${reset}" ;;
       esac
       exec_as_postgres sed -i "s|${key}=[^ ']*|${key}=${value}|" ${PG_RECOVERY_CONF}
     fi
@@ -212,11 +215,11 @@ configure_log_archiving() {
       execute_shell="[[ \! -x ${log_archive}/archive.sh ]] || ([[ -x ${log_archive}/archive.sh ]] && ${log_archive}/archive.sh %f %p)"
       set_postgresql_param "archive_command" "(${backup_in_progress} || (${file_exists} || (${copy_file} && (${execute_shell}))))"
     else
-      echo "Using custom log archiving command ${PG_LOG_ARCHIVING_COMMAND}..."
+      echo -e "${yellow}‣ Using custom log archiving command: ${yellow_bold}${PG_LOG_ARCHIVING_COMMAND}${reset}"
       set_postgresql_param "archive_command" "${PG_LOG_ARCHIVING_COMMAND}"
     fi
   else
-    echo "Disabling log archiving..."
+    echo -e "${yellow}‣ Disabling log archiving${reset}"
     set_postgresql_param "archive_mode" "off"
   fi
 }
@@ -280,12 +283,12 @@ initialize_database() {
         echo "Initializing database..."
         PG_OLD_VERSION=$(find ${PG_HOME}/[0-9].[0-9]/main -maxdepth 1 -name PG_VERSION 2>/dev/null | grep -v $PG_VERSION | sort -r | head -n1 | cut -d'/' -f5)
         if [[ -n ${PG_OLD_VERSION} ]]; then
-          echo "‣ Migrating PostgreSQL ${PG_OLD_VERSION} data to ${PG_VERSION}..."
+          echo -e "${red}‣ Migrating PostgreSQL ${PG_OLD_VERSION} data to ${PG_VERSION}...${reset}"
 
           # protect the existing data from being altered by apt-get
           mv ${PG_HOME}/${PG_OLD_VERSION} ${PG_HOME}/${PG_OLD_VERSION}.migrating
 
-          echo "‣ Installing PostgreSQL ${PG_OLD_VERSION}..."
+          echo -e "${red}‣ Installing PostgreSQL ${PG_OLD_VERSION}...${reset}"
           if ! ( apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql-${PG_OLD_VERSION} postgresql-client-${PG_OLD_VERSION} ) >/dev/null; then
             echo "ERROR! Failed to install PostgreSQL ${PG_OLD_VERSION}. Exiting..."
             # first move the old data back
@@ -391,9 +394,29 @@ create_user() {
           echo "ERROR! Please specify a password for DB_USER in DB_PASS. Exiting..."
           exit 1
         fi
-        echo "Creating database user: ${DB_USER}"
-        if [[ -z $(psql -U ${PG_USER} -Atc "SELECT 1 FROM pg_catalog.pg_user WHERE usename = '${DB_USER}'";) ]]; then
-          psql -U ${PG_USER} -c "CREATE ROLE \"${DB_USER}\" with LOGIN CREATEDB PASSWORD '${DB_PASS}';" >/dev/null
+        db_users=($(awk -F'[, ]' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_USER}"))
+        if [[ ${#db_users[@]} == 1 ]]; then
+          # Support old-style syntax, so that passwords with spaces still work
+          if [[ -z $(psql -U ${PG_USER} -Atc "SELECT 1 FROM pg_catalog.pg_user WHERE usename = '${DB_USER}'";) ]]; then
+            echo -e "${yellow}‣ Creating database user (legacy): ${yellow_bold}${DB_USER}${reset}"
+            psql -U ${PG_USER} -c "CREATE ROLE \"${DB_USER}\" with LOGIN CREATEDB PASSWORD '${DB_PASS}';" >/dev/null
+          else
+            echo -e "${yellow}‣ Database user already exists, will not create: ${yellow_bold}${DB_USER}${reset}"
+          fi
+        else
+          db_passwords=($(awk -F' ' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_PASS}"))
+          i=0
+          for db_user in "${db_users[@]}"; do
+            password_index=$(( $i % ${#db_passwords[@]} ))
+            db_password="${db_users[$password_index]}"
+            if [[ -z $(psql -U ${PG_USER} -Atc "SELECT 1 FROM pg_catalog.pg_user WHERE usename = '${db_user}'";) ]]; then
+              echo -e "${yellow}‣ Creating database user: ${yellow_bold}${db_user}${yellow}, pass index ${yellow_bold}${password_index}${reset}"
+              psql -U ${PG_USER} -c "CREATE ROLE \"${db_user}\" with LOGIN CREATEDB PASSWORD '${DB_PASS}';" >/dev/null
+            else
+              echo -e "${yellow}‣ Database user already exists, will not create: ${yellow_bold}${db_user}${reset}"
+            fi
+            i=$(($i+1))
+          done
         fi
         ;;
     esac
@@ -409,11 +432,11 @@ load_extensions() {
     echo "  The DB_UNACCENT option will be deprecated in favour of DB_EXTENSION soon."
     echo "  Please migrate to using DB_EXTENSION"
     echo
-    echo "‣ Loading unaccent extension..."
+    echo -e "${yellow}‣ Loading unaccent extension...${reset}"
     psql -U ${PG_USER} -d ${database} -c "CREATE EXTENSION IF NOT EXISTS unaccent;" >/dev/null 2>&1
   fi
 
-  for extension in $(awk -F',' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_EXTENSION}"); do
+  for extension in $(awk -F'[, ]' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_EXTENSION}"); do
     echo "‣ Loading ${extension} extension..."
     psql -U ${PG_USER} -d ${database} -c "CREATE EXTENSION IF NOT EXISTS ${extension};" >/dev/null 2>&1
   done
@@ -426,17 +449,25 @@ create_database() {
         echo "INFO! Database cannot be created on a $REPLICATION_MODE node. Skipping..."
         ;;
       *)
-        for database in $(awk -F',' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_NAME}"); do
-          echo "Creating database: ${database}..."
+        for database in $(awk -F'[, ]+' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_NAME}"); do
+          db_user="${DB_USER}"
+          if [[ $database = *"@"* ]]; then
+            db_user=$(echo $database | cut -d@ -f1)
+            database=$(echo $database | cut -d@ -f2)
+          else
+            db_user=$(awk -F'[, ]' '{ print $1 }' <<< "${DB_USER}")
+          fi
+
+          echo -e "${yellow}‣ Creating database: ${yellow_bold}${database}${reset}"
           if [[ -z $(psql -U ${PG_USER} -Atc "SELECT 1 FROM pg_catalog.pg_database WHERE datname = '${database}'";) ]]; then
             psql -U ${PG_USER} -c "CREATE DATABASE \"${database}\" WITH TEMPLATE = \"${DB_TEMPLATE}\";" >/dev/null
           fi
 
           load_extensions ${database}
 
-          if [[ -n ${DB_USER} ]]; then
-            echo "‣ Granting access to ${DB_USER} user..."
-            psql -U ${PG_USER} -c "GRANT ALL PRIVILEGES ON DATABASE \"${database}\" to \"${DB_USER}\";" >/dev/null
+          if [[ -n ${db_user} ]]; then
+            echo -e "${yellow}‣ Granting access to ${yellow_bold}${database}${reset}${yellow} for user ${yellow_bold}${db_user}${reset}${yellow}...${reset}"
+            psql -U ${PG_USER} -c "GRANT ALL PRIVILEGES ON DATABASE \"${database}\" to \"${db_user}\";" >/dev/null
           fi
         done
         ;;
@@ -454,7 +485,7 @@ create_replication_user() {
           exit 1
         fi
 
-        echo "Creating replication user: ${REPLICATION_USER}"
+        echo -e "${yellow}‣ Creating replication user: ${yellow_bold}${REPLICATION_USER}${reset}"
         if [[ -z $(psql -U ${PG_USER} -Atc "SELECT 1 FROM pg_catalog.pg_user WHERE usename = '${REPLICATION_USER}'";) ]]; then
           psql -U ${PG_USER} -c "CREATE ROLE \"${REPLICATION_USER}\" WITH REPLICATION LOGIN ENCRYPTED PASSWORD '${REPLICATION_PASS}';" >/dev/null
         fi
@@ -469,13 +500,13 @@ create_replication_user() {
 start_postgres_daemon() {
   # internal start of server in order to allow set-up using psql-client
   # does not listen on TCP/IP and waits until start finishes
-  echo "Starting PostgreSQL ${PG_VERSION}: pg_ctl -D $PG_DATADIR -o "${EXTRA_ARGS} -c listen_addresses=''" -w start"
+  echo -e "${orange}‣ Starting PostgreSQL ${PG_VERSION}: ${yellow_bold}pg_ctl -D $PG_DATADIR -o "${EXTRA_ARGS} -c listen_addresses=''" -w start${reset}"
   gosu postgres pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
 }
 
 stop_postgres_daemon() {
   # Stop the daemon
-  echo "Stoppping PostgreSQL..."
+  echo -e "${orange}‣ Stoppping PostgreSQL...${reset}"
   gosu postgres pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
 }
 
@@ -491,16 +522,16 @@ run_startup_scripts() {
     for f in /docker-entrypoint-initdb.d/*; do
       case "$f" in
         *.sh)
-          echo "$0: running $f"
+          echo -e "${yellow}$0: running ${yellow_bold}$f${reset}"
           . "$f"
           ;;
         *.sql)
-          echo "$0: running $f"
+          echo -e "${yellow}$0: executing ${yellow_bold}$f${reset}"
           psql -v ON_ERROR_STOP=1 --username "$PG_USER" --dbname "$PG_DATABASE" < "$f"
           echo
           ;;
         *)
-          echo "$0: ignoring $f"
+          echo -e "${orange}$0: ignoring ${yellow_bold}$f${reset}"
           ;;
         esac
     echo

@@ -163,6 +163,27 @@ docker run --name postgresql -itd --restart always \
   boky/postgresql
 ```
 
+You may also use the [official-image](https://github.com/docker-library/postgres) variables `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+and `POSTGRES_PASSWORD_FILE`.
+
+If you need to create multiple users, separate them by space. **Consequentially, this also means that passwords containing spaces 
+are going to be an issue.**
+
+```bash
+docker run --name postgresql -itd --restart always \
+  --env 'POSTGRES_USER=dbuser1 dbuser2' --env 'POSTGRES_PASSWORD=dbuserpass1 dbuserpass2' \
+  boky/postgresql
+```
+
+Passwords will be assigned in the round-robim fashion. This allows you to do things like:
+```bash
+docker run --name postgresql -itd --restart always \
+  --env 'POSTGRES_USER=dbuser1 dbuser2 dbuser3 dbuser4 dbuser5 dbuser6' --env 'POSTGRES_PASSWORD=samepass' \
+  boky/postgresql
+```
+
+
+
 > **Notes**
 >
 > - The created user can login remotely
@@ -172,7 +193,8 @@ docker run --name postgresql -itd --restart always \
 
 ## Creating databases
 
-A new PostgreSQL database can be created by specifying the `DB_NAME` variable while starting the container.
+A new PostgreSQL database can be created by specifying the `DB_NAME` (or `POSTGRES_DB` for official image compatibility) variable 
+when starting the container.
 
 ```bash
 docker run --name postgresql -itd --restart always \
@@ -182,13 +204,13 @@ docker run --name postgresql -itd --restart always \
 
 By default databases are created by copying the standard system database named `template1`. You can specify a different template for your database using the `DB_TEMPLATE` parameter. Refer to [Template Databases](http://www.postgresql.org/docs/10/static/manage-ag-templatedbs.html) for further information.
 
-Additionally, more than one database can be created by specifying a comma separated list of database names in `DB_NAME`. For example, the following command creates two new databases named `dbname1` and `dbname2`.
+Additionally, more than one database can be created by specifying a space or comma separated list of database names in `DB_NAME`. For example, the following command creates two new databases named `dbname1` and `dbname2`.
 
 *This feature is only available in releases greater than `9.1-1`*
 
 ```bash
 docker run --name postgresql -itd --restart always \
-  --env 'DB_NAME=dbname1,dbname2' \
+  --env 'DB_NAME=dbname1 dbname2' \
   boky/postgresql
 ```
 
@@ -203,7 +225,15 @@ docker run --name postgresql -itd --restart always \
   boky/postgresql
 ```
 
-In the above example `dbuser` with be granted access to both the `dbname1` and `dbname2` databases.
+In the above example `dbuser` with be granted access to both the `dbname1` and `dbname2` databases. If the `DB_USER` contains more than one
+username, **the first user will be granted access to the databases**. To explicitly set the user, use the following syntax:
+```bash
+docker run --name postgresql -itd --restart always \
+  --env 'DB_USER=dbuser1 dbuser2' --env 'DB_PASS=dbuserpass' \
+  --env 'DB_NAME=dbuser1@dbname1 dbuser2@dbname2' \
+  boky/postgresql
+```
+
 
 # Enabling extensions
 

@@ -1,5 +1,9 @@
 # Changelog
 
+**10.5-02**
+- added an option to create multiple usernames at the time of initialization
+- switched to multistage build which should help building things a bit faster
+
 **10.5-01**
 - upgraded ot Postgres 10.5
 - added compatibility layer to be able to create database with the same variables as with the original image

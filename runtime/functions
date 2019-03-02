@@ -82,9 +82,11 @@ create_datadir() {
   mkdir -p ${PG_HOME}
   echo "Initializing data: ${PG_DATADIR}"
   if [[ -d ${PG_DATADIR} ]]; then
+    echo "...setting permissions on files ${PG_DATADIR}"
     find ${PG_DATADIR} -type f -exec chmod 0600 {} \;
     find ${PG_DATADIR} -type d -exec chmod 0700 {} \;
   fi
+  echo "...reowning ${PG_DATADIR} to ${PG_USER}:${PG_USER}"
   chown -R ${PG_USER}:${PG_USER} ${PG_HOME}
 }
 
@@ -434,7 +436,7 @@ load_extensions() {
     echo
     echo "WARNING: "
     echo "  The DB_UNACCENT option will be deprecated in favour of DB_EXTENSION soon."
-    echo "  Please migrate to using DB_EXTENSION"
+    echo "  Please migrate to using DB_EXTENSION=\"unaccent\""
     echo
     echo -e "${yellow}‣ Loading unaccent extension...${reset}"
     psql -U ${PG_USER} -d ${database} -c "CREATE EXTENSION IF NOT EXISTS unaccent;" >/dev/null 2>&1
@@ -442,7 +444,7 @@ load_extensions() {
 
   for extension in $(awk -F'[, ]' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_EXTENSION}"); do
     echo -e "${yellow}‣ Loading ${yellow_bold}${extension}${yellow} extension...${reset}"
-    psql -U ${PG_USER} -d ${database} -c "CREATE EXTENSION IF NOT EXISTS ${extension};" >/dev/null 2>&1
+    psql -U ${PG_USER} -d ${database} -c "CREATE EXTENSION IF NOT EXISTS \"${extension}\";" >/dev/null 2>&1
   done
 }
 

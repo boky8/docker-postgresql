@@ -1,5 +1,8 @@
 # Changelog
 
+11.2-02
+- make sure that extension names are quoted to make it possible to work with extensions with a dash in the name
+
 11.2-01
 - switch to Postgres 11.2
 - switched from gosu to su-exec as it's even smaller and available in alpine repository

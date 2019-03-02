@@ -46,7 +46,7 @@ if [[ ! -z "$PGUSER" ]]; then
 fi
 
 if [[ ! -z "$POSTGRES_USER" ]]; then
-  echo -e "${orange}‣ Compatility layer: setting DB_USER to: ${yellow_bold}'$POSTGRES_USER'${reset}"
+  echo -e "${orange}‣ Compatility layer: setting DB_USER to: ${yellow_bold}'$POSTGRES_USER'${yellow} from ${yellow_bold}POSTGRES_USER${reset}"
   DB_USER="$POSTGRES_USER"
 fi
 
@@ -57,13 +57,13 @@ fi
 
 
 if [[ ! -z "$POSTGRES_DB" ]]; then
-  echo -e "${orange}‣ Compatility layer: setting DB_NAME to: ${yellow_bold}'$POSTGRES_DB'${reset}"
+  echo -e "${orange}‣ Compatility layer: setting DB_NAME to: ${yellow_bold}'$POSTGRES_DB'${yellow} from ${yellow_bold}POSTGRES_DB${reset}"
   DB_NAME="$POSTGRES_DB"
 fi
 
 ## Execute command as PG_USER
 exec_as_postgres() {
-  gosu postgres "$@"
+  su-exec postgres "$@"
 }
 
 map_uidgid() {
@@ -441,7 +441,7 @@ load_extensions() {
   fi
 
   for extension in $(awk -F'[, ]' '{for (i = 1 ; i <= NF ; i++) print $i}' <<< "${DB_EXTENSION}"); do
-    echo "‣ Loading ${extension} extension..."
+    echo -e "${yellow}‣ Loading ${yellow_bold}${extension}${yellow} extension...${reset}"
     psql -U ${PG_USER} -d ${database} -c "CREATE EXTENSION IF NOT EXISTS ${extension};" >/dev/null 2>&1
   done
 }
@@ -502,20 +502,20 @@ create_replication_user() {
 
 start_postgres() {
   echo -e "${orange}‣ Starting PostgreSQL ${PG_VERSION}: ${yellow_bold}${PG_BINDIR}postgres -D \"${PG_DATADIR}\" ${EXTRA_ARGS}${reset}"
-  exec gosu ${PG_USER} ${PG_BINDIR}/postgres -D "${PG_DATADIR}" ${EXTRA_ARGS}
+  exec su-exec ${PG_USER} ${PG_BINDIR}/postgres -D "${PG_DATADIR}" ${EXTRA_ARGS}
 }
 
 start_postgres_daemon() {
   # internal start of server in order to allow set-up using psql-client
   # does not listen on TCP/IP and waits until start finishes
   echo -e "${orange}‣ Starting PostgreSQL ${PG_VERSION}: ${yellow_bold}pg_ctl -D $PG_DATADIR -o "${EXTRA_ARGS} -c listen_addresses=''" -w start${reset}"
-  gosu ${PG_USER} pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
+  su-exec ${PG_USER} pg_ctl -D "$PG_DATADIR" -o "${EXTRA_ARGS} -c listen_addresses=''" -w start
 }
 
 stop_postgres_daemon() {
   # Stop the daemon
   echo -e "${orange}‣ Stoppping PostgreSQL...${reset}"
-  gosu ${PG_USER} pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
+  su-exec ${PG_USER} pg_ctl -D "$PG_DATADIR" -s -m fast -w stop
 }
 
 

@@ -1,5 +1,10 @@
 # Changelog
 
+11.2-01
+- switch to Postgres 11.2
+- switched from gosu to su-exec as it's even smaller and available in alpine repository
+- optimized package management by using `apk --virtual` keyword
+
 **10.5-02**
 - added an option to create multiple usernames at the time of initialization
 - switched to multistage build which should help building things a bit faster
